@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF3DC">
+<title>Lean Matrix</title>
+<style>
+:root{--bg:#FBF3DC;--pn:#FFFBEF;--soft:#F5EACB;--ink:#1E3A28;--mu:#5C6A55;--ac:#B4690E;--onac:#fff;--lf:#4C7A46;--ln:#E6D9B5;--warn:#A4471C;
+ --sh:0 1px 0 rgba(30,58,40,.05),0 12px 26px -16px rgba(30,58,40,.42);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13221A;--pn:#1C3025;--soft:#243B2D;--ink:#EDF3E8;--mu:#9DB1A3;--ac:#E8A94A;--onac:#1B1406;--lf:#7BC48A;--ln:#2C4636;--warn:#F0A67F;--sh:0 1px 0 rgba(0,0,0,.2),0 12px 26px -16px rgba(0,0,0,.7);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#13221A;--pn:#1C3025;--soft:#243B2D;--ink:#EDF3E8;--mu:#9DB1A3;--ac:#E8A94A;--onac:#1B1406;--lf:#7BC48A;--ln:#2C4636;--warn:#F0A67F;--sh:0 1px 0 rgba(0,0,0,.2),0 12px 26px -16px rgba(0,0,0,.7);color-scheme:dark}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-rounded,"SF Pro Rounded","Nunito","Avenir Next",Seravek,"Segoe UI",system-ui,sans-serif;font-size:16px;line-height:1.4}
+main{max-width:560px;margin:0 auto;padding:12px 14px 104px}
+h2{margin:0 0 6px;font-size:21px;font-weight:800;letter-spacing:-.01em}h3{margin:0;font-size:16px;font-weight:800}p{margin:8px 0}b,strong{font-weight:800}
+.mu{color:var(--mu);font-size:14px}.sm{font-size:13px}.mt{margin-top:8px}.good{color:var(--lf)}.bad{color:var(--warn)}
+.card{background:var(--pn);border:2px solid var(--ln);border-radius:22px;padding:14px 16px;margin-top:12px;box-shadow:var(--sh)}
+.card.warn{border-color:#C9A34E;background:linear-gradient(0deg,rgba(201,163,78,.12),rgba(201,163,78,.12)),var(--pn)}.card.alert{border-color:var(--warn);background:linear-gradient(0deg,rgba(164,71,28,.12),rgba(164,71,28,.12)),var(--pn)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sb{justify-content:space-between}
+input,select{font:inherit;background:var(--bg);color:var(--ink);border:2px solid var(--ln);border-radius:13px;padding:9px 11px;width:100%;min-width:0}
+label{display:block;flex:1;min-width:100px;font-size:13px;color:var(--mu)}label input,label select{margin-top:3px;font-size:16px}
+.btn{background:var(--ac);color:var(--onac);border:0;border-radius:15px;padding:11px 18px;font:inherit;font-weight:800;cursor:pointer;min-height:44px}.btn.g{background:var(--pn);color:var(--ink);border:2px solid var(--ln)}.btn:disabled{opacity:.45}
+.chip{background:var(--bg);border:2px solid var(--ln);border-radius:22px;padding:6px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;min-height:36px}.chip.on{border-color:var(--ac);background:var(--soft);font-weight:800}.chip:disabled{opacity:.4}.chip.stp{min-width:44px;min-height:44px;font-size:22px;padding:0}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+.bar{height:13px;border-radius:9px;background:var(--ln);overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;border-radius:9px;background:var(--lf);transition:width .5s}.bar.hi i{background:#D9622B}.bar.wn i{background:#8FA3B5}.bar.ok i{background:var(--lf)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.tiles.t2{grid-template-columns:repeat(2,1fr)}
+.tile{background:var(--soft);border-radius:16px;padding:9px 10px;min-width:0}.tile b{display:block;font-size:19px;line-height:1.1;font-weight:800}.tile span{font-size:12px;color:var(--mu);line-height:1.2;display:block;margin-top:2px}
+.big{font-size:34px;font-weight:800;line-height:1.05;letter-spacing:-.02em}
+.note{background:var(--soft);border-radius:14px;padding:9px 12px;font-size:14px;margin-top:8px}.warnbox{background:rgba(164,71,28,.11);border:2px solid rgba(164,71,28,.35);border-radius:14px;padding:9px 12px;font-size:14px;margin-top:8px}
+.coach{background:var(--pn);border:2px solid var(--ln);border-radius:16px;padding:10px 14px;margin-top:4px;font-weight:700;box-shadow:var(--sh)}
+.meal{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--ln)}.meal:last-child{border-bottom:0}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}.tbl th{text-align:left;color:var(--mu);font-weight:700;font-size:12px;padding:4px}.tbl td{padding:8px 4px;border-top:1px dashed var(--ln)}.tbl th:nth-child(n+2),.tbl td:nth-child(n+2){text-align:right}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.lg{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;margin:3px 12px 3px 0}.lg i{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+.csvbox{width:100%;height:120px;font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--ink);border:2px solid var(--ln);border-radius:12px;padding:8px;margin-top:8px}
+details.card summary{cursor:pointer;font-weight:800}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.pt{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg);border:2px solid var(--ln);border-radius:18px;padding:12px 6px;font:inherit;color:var(--ink);cursor:pointer;min-height:96px}.pt .pi{font-size:30px;line-height:1.1}.pt.on{border-color:var(--lf);background:rgba(76,122,70,.16)}.pt .tk{position:absolute;top:6px;right:8px;font-style:normal;font-weight:800;color:var(--lf)}
+.cm{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--bg);border:2px solid var(--ln);border-radius:16px;padding:8px 2px;font:inherit;color:var(--ink);cursor:pointer;min-width:0;min-height:62px}.cm.on{border-color:var(--ac);background:var(--soft);font-weight:800}
+.strip{display:flex;gap:2px;margin-top:8px}.sq{flex:1;height:14px;border-radius:3px;background:var(--ln);max-width:18px}.sq.on{background:var(--lf)}.sq.no{opacity:.35}
+.heat{display:flex;gap:4px;margin-top:10px}.hcol{display:flex;flex-direction:column;gap:4px;flex:1}.hc{display:block;aspect-ratio:1;border-radius:4px;background:var(--ln)}.hc.fut{opacity:.25}.hc.no{opacity:.35}.hc.l1{background:#C9DDB9}.hc.l2{background:#9BC48B}.hc.l3{background:#6FA663}.hc.l4{background:#3F7A3B}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--pn);border-top:2px solid var(--ln);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));z-index:8}
+nav button{flex:1;min-width:0;background:none;border:0;font:inherit;font-size:11px;color:var(--mu);padding:4px 0;cursor:pointer;min-height:48px;border-radius:14px}nav button.on{color:var(--ac);font-weight:800;background:var(--soft)}nav span{display:block;font-size:21px;line-height:1.2}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style></head><body>
+<main id="app"></main><nav id="nav" aria-label="Main"></nav>
+<script>
+'use strict';
+/* =====================================================================
+   LEAN MATRIX
+   A small daily check-in, and as many ways of looking at it as possible.
+   One file, vanilla JS, works offline, no pictures, nothing to evolve.
+
+   THE DAILY CHECK-IN (a few taps): plan meals (porridge, salad, salad), snacks, weight, how comfortable the day felt.
+   Anything off-plan can still be counted in calories, so the plan isn't the only thing it understands.
+
+   SECTIONS  1 Config · 2 Utilities · 3 State & day data · 4 Weight analytics · 5 Projections
+             6 Body fat · 7 Joints (osteoarthritis) · 8 Comfort & break check · 9 Streaks
+             10 Charts · 11 Views · 12 Actions · 13 Export/import · 14 Boot
+   NOT MEDICAL ADVICE. The body-fat, joint and projection numbers are estimates from published population averages.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. CONFIG: every tunable number lives here
+   --------------------------------------------------------------------- */
+const APP = 'Lean Matrix', KEY = 'lean_v1';
+const DEFAULT_PLAN = [
+  { id: 'p_por', name: 'Porridge', sub: 'breakfast', icon: '🥣', kcal: 300 },
+  { id: 'p_sal1', name: 'Salad', sub: 'lunch', icon: '🥗', kcal: 350 },
+  { id: 'p_sal2', name: 'Salad', sub: 'dinner', icon: '🥗', kcal: 350 }
+];
+const DEFAULT_SNACK_KCAL = 150;
+const ACTIVITY = [[1.2, 'Mostly sitting'], [1.375, 'Lightly active'], [1.55, 'Moderately active'], [1.725, 'Very active']];
+const EMA = 0.1;                       // weight trend smoothing (the "Hacker's Diet" 10% rule)
+const KCAL_PER_KG = 7700;              // rough planning figure
+const BMI_UNDER = 18.5, BMI_OVER = 25, BMI_OBESE = 30;
+const FLOOR = { m: 1500, f: 1200 };    // commonly used lower limits for unsupervised dieting. Editable in Settings.
+const DEFICIT = 500;                   // default daily deficit used for the suggested calorie target
+/* Published figures behind the joint numbers (see the Body tab for sources):
+   - relative risk of developing knee osteoarthritis vs normal weight: overweight 2.45 (95% CI 1.88-3.20), obese 4.55 (2.90-7.13);
+     +35% for every 5 BMI points (BMJ Open meta-analysis of prospective studies)
+   - another meta-analysis (age 50+, onset of knee pain): overweight OR 1.98, obese OR 2.66
+   - each 1 kg of weight lost = about 4 kg less force through the knee with every step (Messier 2005, older adults with knee OA) */
+const OA = { over: { rr: 2.45, lo: 1.88, hi: 3.2 }, obese: { rr: 4.55, lo: 2.9, hi: 7.13 }, per5: 1.35, load: 4, alt: { over: 1.98, obese: 2.66 } };
+/* Break check: when the numbers say it's time to ease off */
+const BREAK = { lowComfort: 2, lowComfortDays: 2, window: 3, trendDrop: 0.7, avgLow: 3.0, lowKcalDays: 3, lowKcalOf: 5, lowKcalRun: 14, fastLossPct: 1.0, nearBmi: 1.5, longPlanDays: 28, snoozeDays: 7 };
+const FAST_REGRESS = [14, 28];         // windows (days) for the weight-rate regressions
+
+/* ---------------------------------------------------------------------
+   2. UTILITIES
+   --------------------------------------------------------------------- */
+const $ = s => document.querySelector(s);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const fmt = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const ds = o => { const d = new Date(); d.setDate(d.getDate() + o); return fmt(d); };
+const sh = (dt, n) => { const d = new Date(dt + 'T12:00:00'); d.setDate(d.getDate() + n); return fmt(d); };
+const dd = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nf = n => Math.round(n).toLocaleString('en-GB');
+const f1 = n => (+n).toFixed(1), f2 = n => (+n).toFixed(2);
+const sg = (n, dp = 1) => { const v = +(+n).toFixed(dp); return (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(dp); };
+const pc = x => Math.round(x * 100);
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const pretty = dt => new Date(dt + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const prettyY = dt => new Date(dt + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const shortD = dt => new Date(dt + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const monthY = dt => new Date(dt + 'T12:00:00').toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const sd = a => { if (a.length < 2) return null; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / (a.length - 1)); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const monday = dt => { const d = new Date(dt + 'T12:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return fmt(d); };
+const bar = (v, cls) => `<div class="bar ${cls || ''}" role="progressbar" aria-valuenow="${pc(clamp(v, 0, 1))}" aria-valuemin="0" aria-valuemax="100"><i style="width:${clamp(v, 0, 1) * 100}%"></i></div>`;
+
+/* ---------------------------------------------------------------------
+   3. STATE + DAY DATA
+   S = { v, p:{name,age,sex,heightCm,goalKg,activity,leanFrac,bf,steps,floor,target}, plan:[{id,name,sub,icon,kcal}], snackKcal,
+         days:{ 'YYYY-MM-DD': { m:{planId:1}, sn:0, ex:[{n,k}], ko:null, w:null, c:null } }, created, lastExport, breakSnooze }
+   w = weight kg, c = comfort 1-5, sn = snack count, ko = a whole-day calorie total you typed instead, ex = extra food
+   --------------------------------------------------------------------- */
+let S = null, V = 'today', TD = ds(0), MSG = '', RST = 0, DT = false, IMPQ = null, IMPERR = '', CSVT = '', DNOTE = '', SERR = '';
+let _cache = {};
+function save() { _cache = {}; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+function newState(p) {
+  return { v: 1, p: Object.assign({ name: '', age: 30, sex: 'm', heightCm: 175, goalKg: 0, activity: 1.375, leanFrac: 0.25, bf: null, steps: 6000, floor: null, target: null }, p),
+    plan: DEFAULT_PLAN.map(x => Object.assign({}, x)), snackKcal: DEFAULT_SNACK_KCAL, days: {}, created: ds(0), lastExport: null, breakSnooze: null };
+}
+function migrate(raw) {
+  if (!raw || typeof raw !== 'object' || !raw.p) return null;
+  const n0 = x => isFinite(+x) ? +x : 0, n = newState({ name: String(raw.p.name || '').slice(0, 24), age: clamp(Math.round(n0(raw.p.age)) || 30, 18, 110), sex: raw.p.sex === 'f' ? 'f' : 'm', heightCm: clamp(n0(raw.p.heightCm) || 175, 100, 230),
+    goalKg: n0(raw.p.goalKg), activity: ACTIVITY.some(a => a[0] === +raw.p.activity) ? +raw.p.activity : 1.375, leanFrac: clamp(n0(raw.p.leanFrac) || 0.25, 0.05, 0.5),
+    bf: raw.p.bf && n0(raw.p.bf.pct) > 0 ? { pct: n0(raw.p.bf.pct), kg: n0(raw.p.bf.kg) } : null, steps: clamp(Math.round(n0(raw.p.steps)) || 6000, 0, 40000), floor: raw.p.floor ? n0(raw.p.floor) : null, target: raw.p.target ? n0(raw.p.target) : null });
+  n.created = raw.created || ds(0); n.lastExport = raw.lastExport || null; n.breakSnooze = raw.breakSnooze || null; n.snackKcal = clamp(n0(raw.snackKcal) || DEFAULT_SNACK_KCAL, 0, 2000);
+  if (Array.isArray(raw.plan) && raw.plan.length) n.plan = raw.plan.filter(x => x && x.id && x.name).slice(0, 8).map(x => ({ id: String(x.id), name: String(x.name).slice(0, 20), sub: String(x.sub || '').slice(0, 14), icon: String(x.icon || '🍽️').slice(0, 4), kcal: clamp(n0(x.kcal), 0, 3000) }));
+  Object.keys(raw.days && typeof raw.days === 'object' ? raw.days : {}).forEach(k => {
+    const d = raw.days[k] || {}, ok = /^\d{4}-\d{2}-\d{2}$/.test(k); if (!ok) return;
+    const day = { m: {}, sn: Math.max(0, Math.round(n0(d.sn))), ex: (Array.isArray(d.ex) ? d.ex : []).filter(e => e && n0(e.k) > 0).map(e => ({ n: String(e.n || 'Food').slice(0, 30), k: Math.round(n0(e.k)) })),
+      ko: d.ko != null && d.ko !== '' && n0(d.ko) > 0 ? Math.round(n0(d.ko)) : null, w: d.w != null && d.w !== '' && n0(d.w) > 20 && n0(d.w) < 400 ? Math.round(n0(d.w) * 100) / 100 : null, c: d.c != null && n0(d.c) >= 1 && n0(d.c) <= 5 ? Math.round(n0(d.c)) : null };
+    Object.keys(d.m && typeof d.m === 'object' ? d.m : {}).forEach(id => { if (d.m[id] && n.plan.some(p => p.id === id)) day.m[id] = 1; });
+    n.days[k] = day;
+  });
+  return n;
+}
+function load() { try { return migrate(JSON.parse(localStorage.getItem(KEY))); } catch (e) { return null; } }
+const dayOf = d => S.days[d] || (S.days[d] = { m: {}, sn: 0, ex: [], ko: null, w: null, c: null });
+const foodLogged = d => { const x = S.days[d]; return !!(x && (Object.keys(x.m).length || x.sn > 0 || x.ex.length || x.ko != null)); };
+const hasAny = d => { const x = S.days[d]; return !!(x && (foodLogged(d) || x.w != null || x.c != null)); };
+function dayKcal(d) {
+  const x = S.days[d]; if (!x) return 0; if (x.ko != null) return x.ko;
+  return S.plan.reduce((s, p) => s + (x.m[p.id] ? p.kcal : 0), 0) + x.sn * S.snackKcal + x.ex.reduce((s, e) => s + e.k, 0);
+}
+const planDone = d => { const x = S.days[d]; return x ? S.plan.filter(p => x.m[p.id]).length : 0; };
+const planFrac = d => S.plan.length ? planDone(d) / S.plan.length : 0;
+const cOf = d => S.days[d] && S.days[d].c != null ? S.days[d].c : null;
+const wOf = d => S.days[d] && S.days[d].w != null ? S.days[d].w : null;
+const firstDate = () => { const k = Object.keys(S.days).filter(hasAny).sort(); return k.length && k[0] < S.created ? k[0] : S.created; };
+
+/* profile maths */
+const hM = () => S.p.heightCm / 100;
+const bmiOf = w => w / (hM() * hM());
+const wAtBmi = b => b * hM() * hM();
+const bmr = w => 10 * w + 6.25 * S.p.heightCm - 5 * S.p.age + (S.p.sex === 'm' ? 5 : -161);   // Mifflin-St Jeor
+const tdee = w => bmr(w) * S.p.activity;
+const floorK = () => S.p.floor || FLOOR[S.p.sex];
+const targetK = w => S.p.target || Math.max(floorK(), Math.round((tdee(w || latestKg() || 75) - DEFICIT) / 50) * 50);
+const bmiCat = b => b < BMI_UNDER ? 'Underweight' : b < BMI_OVER ? 'Healthy range' : b < BMI_OBESE ? 'Overweight' : 'Obese';
+
+/* ---------------------------------------------------------------------
+   4. WEIGHT ANALYTICS
+   --------------------------------------------------------------------- */
+function WS() { return _cache.ws || (_cache.ws = Object.keys(S.days).filter(d => S.days[d].w != null).sort().map(d => ({ d, w: S.days[d].w }))); }
+const latest = () => { const a = WS(); return a.length ? a[a.length - 1] : null; };
+const latestKg = () => { const l = latest(); return l ? l.w : null; };
+const startKg = () => { const a = WS(); return a.length ? a[0].w : null; };
+/* mean weight over the n days ending at `end` (inclusive) */
+function avgW(end, n) { const lo = sh(end, -(n - 1)); return mean(WS().filter(x => x.d >= lo && x.d <= end).map(x => x.w)); }
+/* exponential trend, carried across days without a weigh-in */
+function trendMap() {
+  if (_cache.tm) return _cache.tm; const a = WS(), m = {}; if (!a.length) return (_cache.tm = m);
+  const wm = Object.fromEntries(a.map(x => [x.d, x.w])); let t = a[0].w;
+  for (let d = a[0].d, last = ds(0) > a[a.length - 1].d ? ds(0) : a[a.length - 1].d; d <= last; d = sh(d, 1)) { if (wm[d] != null && d !== a[0].d) t += EMA * (wm[d] - t); m[d] = t; }
+  return (_cache.tm = m);
+}
+const trendNow = () => { const m = trendMap(), a = WS(); if (!a.length) return null; return m[ds(0)] != null ? m[ds(0)] : m[a[a.length - 1].d]; };
+const trendAt = d => { const m = trendMap(); return m[d] != null ? m[d] : null; };
+/* least-squares slope (kg/day) over the n days ending today. Needs enough points and spread. */
+function regress(n, end) {
+  end = end || ds(0); const lo = sh(end, -(n - 1)), pts = WS().filter(x => x.d >= lo && x.d <= end).map(x => ({ x: dd(lo, x.d), y: x.w }));
+  if (pts.length < 4 || pts[pts.length - 1].x - pts[0].x < n * 0.5) return null;
+  const mx = mean(pts.map(p => p.x)), my = mean(pts.map(p => p.y)); let sxx = 0, sxy = 0; pts.forEach(p => { sxx += (p.x - mx) ** 2; sxy += (p.x - mx) * (p.y - my); });
+  if (!sxx) return null; const b = sxy / sxx, a = my - b * mx; let rss = 0; pts.forEach(p => { rss += (p.y - (a + b * p.x)) ** 2; });
+  const se = pts.length > 2 ? Math.sqrt(rss / (pts.length - 2) / sxx) : null;
+  return { b, se, n: pts.length, a, lo };
+}
+/* the rate we project with: 14-day regression if there is one, else 28-day */
+const rateNow = () => { for (const n of FAST_REGRESS) { const r = regress(n); if (r) return Object.assign({ days: n }, r); } return null; };
+/* per-day figures for every weigh-in: change on the previous weigh-in, and against the average of the 7 days before */
+function wStats() {
+  if (_cache.st) return _cache.st; const a = WS(), out = {};
+  a.forEach((x, i) => {
+    const prev = i ? a[i - 1] : null, gap = prev ? dd(prev.d, x.d) : null, lo = sh(x.d, -7), before = a.filter(y => y.d >= lo && y.d < x.d).map(y => y.w);
+    out[x.d] = { w: x.w, dPrev: prev && gap <= 4 ? x.w - prev.w : null, gap, dAvg7: before.length >= 3 ? x.w - mean(before) : null };
+  });
+  return (_cache.st = out);
+}
+/* a weigh-in "is down" if it's under the previous one, "below 7" if it's under the average of the 7 days before */
+const isDown = d => { const s = wStats()[d]; return !!(s && s.dPrev != null && s.dPrev < 0); };
+const isBelow7 = d => { const s = wStats()[d]; return !!(s && s.dAvg7 != null && s.dAvg7 < 0); };
+
+/* ---------------------------------------------------------------------
+   5. PROJECTIONS
+   Central line = trend now + rate x days. The band reflects how uncertain the rate is (about 80%). Never projected below BMI 18.5.
+   --------------------------------------------------------------------- */
+const minKg = () => wAtBmi(BMI_UNDER);
+function project(days) {
+  const t = trendNow(), r = rateNow(); if (t == null || !r) return null; const mk = minKg(), se = r.se == null ? Math.abs(r.b) * 0.5 : r.se, z = 1.28;
+  const at = b => Math.max(mk, t + b * days);
+  return { mid: at(r.b), lo: at(r.b - z * se), hi: at(r.b + z * se), clamped: t + r.b * days < mk, rate: r };
+}
+function goalDate() {
+  const t = trendNow(), r = rateNow(), g = S.p.goalKg; if (t == null || !r || !(g > 0)) return null; if (t <= g) return { done: true };
+  const se = r.se == null ? Math.abs(r.b) * 0.5 : r.se, z = 1.28, days = b => b < 0 ? (t - g) / -b : null, mid = days(r.b), early = days(r.b - z * se), late = days(r.b + z * se);
+  return { mid: mid != null ? sh(ds(0), Math.round(mid)) : null, early: early != null ? sh(ds(0), Math.round(early)) : null, late: late != null ? sh(ds(0), Math.round(late)) : null, midDays: mid };
+}
+/* what your logged calories alone would predict, to compare with what the scale shows */
+function calorieModel() {
+  const w = latestKg(); if (w == null) return null; const days = []; for (let i = 0; i < 7; i++) { const d = ds(-i); if (foodLogged(d)) days.push(dayKcal(d)); } if (days.length < 3) return null;
+  const avg = mean(days), def = tdee(w) - avg; return { avg, tdee: tdee(w), def, perWeek: def * 7 / KCAL_PER_KG, n: days.length };
+}
+
+/* ---------------------------------------------------------------------
+   6. BODY FAT
+   Starting point: the Deurenberg BMI formula (standard error about 4 percentage points, slightly high in obesity), or a reading you enter.
+   Changes: a set share of every kg lost is lean tissue (default 25%, typical range 10-30%; more with fast loss and low protein).
+   --------------------------------------------------------------------- */
+const bfFormula = w => clamp(1.2 * bmiOf(w) + 0.23 * S.p.age - 10.8 * (S.p.sex === 'm' ? 1 : 0) - 5.4, 3, 65);
+function bfAnchor() { if (S.p.bf && S.p.bf.kg > 0) return { w: S.p.bf.kg, pct: S.p.bf.pct, measured: true }; const w = trendNow() || latestKg(); return w ? { w, pct: bfFormula(w), measured: false } : null; }
+function bfAt(w) { const a = bfAnchor(); if (!a) return null; const fm0 = a.w * a.pct / 100, fm = Math.max(0.5, fm0 + (1 - S.p.leanFrac) * (w - a.w)); return { pct: clamp(fm / w * 100, 3, 65), fm, ffm: w - fm }; }
+
+/* ---------------------------------------------------------------------
+   7. JOINTS
+   --------------------------------------------------------------------- */
+function oaMult(bmi) { return bmi < BMI_OVER ? { cat: 'Healthy range or below', rr: 1, lo: 1, hi: 1 } : bmi < BMI_OBESE ? Object.assign({ cat: 'Overweight' }, OA.over) : Object.assign({ cat: 'Obese' }, OA.obese); }
+const kneeLoad = w => w * OA.load;                         // kg of force through a knee per step, roughly
+
+/* ---------------------------------------------------------------------
+   8. COMFORT + BREAK CHECK
+   --------------------------------------------------------------------- */
+const COMFORT = [['😣', 'Rough'], ['😕', 'Low'], ['😐', 'Okay'], ['🙂', 'Good'], ['😄', 'Great']];
+function comfortAvg(end, n) { const vals = []; for (let i = 0; i < n; i++) { const c = cOf(sh(end, -i)); if (c != null) vals.push(c); } return { avg: mean(vals), n: vals.length }; }
+const comfortIndex = a => a == null ? null : Math.round((a - 1) / 4 * 100);
+function breakCheck() {
+  const out = { level: 0, reasons: [], stop: false }, today = ds(0), w = latestKg();
+  const recent = []; for (let i = 0; i < BREAK.window + 1; i++) { const c = cOf(sh(today, -i)); if (c != null) recent.push(c); }
+  const last3 = recent.slice(0, BREAK.window), lowN = last3.filter(c => c <= BREAK.lowComfort).length;
+  if (lowN >= BREAK.lowComfortDays) { out.level = Math.max(out.level, 2); out.reasons.push(`${lowN} of your last ${last3.length} comfort scores were ${BREAK.lowComfort} or lower.`); }
+  const c7 = comfortAvg(today, 7), p7 = comfortAvg(sh(today, -7), 7);
+  if (c7.n >= 4 && p7.n >= 4 && c7.avg <= BREAK.avgLow && p7.avg - c7.avg >= BREAK.trendDrop) { out.level = Math.max(out.level, 1); out.reasons.push(`Your weekly comfort average dropped from ${f1(p7.avg)} to ${f1(c7.avg)}.`); }
+  /* Eating under your floor: a plan like porridge + salad + salad is always a bit under it, so this alone only raises a flag after a long unbroken run.
+     Shorter low stretches are added as context when something else (comfort, rate of loss) is already prompting a break. */
+  const k = []; for (let i = 0; i < BREAK.lowKcalOf; i++) { const d = sh(today, -i); if (foodLogged(d) && !(i === 0 && !S.days[d].c && !S.days[d].w && planDone(d) < S.plan.length)) k.push(dayKcal(d)); }
+  const lowK = k.filter(x => x < floorK()).length; let run = 0; for (let i = 0; i < 60; i++) { const d = sh(today, -i); if (!foodLogged(d)) { if (i === 0) continue; break; } if (dayKcal(d) < floorK()) run++; else break; }
+  const lowMsg = k.length >= BREAK.lowKcalDays && lowK >= BREAK.lowKcalDays ? `${lowK} of your last ${k.length} logged days were under your ${nf(floorK())} kcal floor.` : null;
+  if (run >= BREAK.lowKcalRun) { out.level = Math.max(out.level, 1); out.reasons.push(`You've been under your ${nf(floorK())} kcal floor for ${run} days in a row.`); }
+  else if (lowMsg && out.level > 0) out.reasons.push(lowMsg);
+  const r14 = regress(14), r28 = regress(28);
+  if (w && r14 && r28 && -r14.b * 7 / w * 100 > BREAK.fastLossPct && -r28.b * 7 / w * 100 > BREAK.fastLossPct) { out.level = Math.max(out.level, 1); out.reasons.push(`You've been losing over ${BREAK.fastLossPct}% of your body weight a week (about ${f2(-r14.b * 7)} kg).`); }
+  if (w) { const b = bmiOf(trendNow() || w); if (b < BMI_UNDER) { out.level = 3; out.stop = true; out.reasons.push(`Your BMI (${f1(b)}) is below ${BMI_UNDER}.`); } else if (b < BMI_UNDER + BREAK.nearBmi) { out.level = Math.max(out.level, 2); out.reasons.push(`Your BMI (${f1(b)}) is getting close to ${BMI_UNDER}.`); } }
+  if (last3.length && last3.filter(c => c === 1).length >= 2) { out.level = Math.max(out.level, 3); out.reasons.push('Two rough days (1/5) in a row.'); }
+  const sn = streakOf(d => planDone(d) === S.plan.length && S.plan.length > 0).cur; if (sn >= BREAK.longPlanDays && out.level === 0) { out.level = 1; out.reasons.push(`You've done ${sn} full plan days in a row. A planned break around now is a normal part of dieting.`); }
+  out.snoozed = !!(S.breakSnooze && S.breakSnooze >= today && out.level < 3);
+  return out;
+}
+
+/* ---------------------------------------------------------------------
+   9. STREAKS: consecutive days of anything. The current streak survives today until the day is over.
+   --------------------------------------------------------------------- */
+function habits() {
+  const h = [{ k: 'weigh', n: 'Weighed in', i: '⚖️', f: d => wOf(d) != null }];
+  S.plan.forEach(p => h.push({ k: p.id, n: p.name + (p.sub ? ' (' + p.sub + ')' : ''), i: p.icon, f: d => !!(S.days[d] && S.days[d].m[p.id]) }));
+  h.push({ k: 'full', n: 'Full plan day', i: '✅', f: d => S.plan.length > 0 && planDone(d) === S.plan.length, frac: planFrac });
+  h.push({ k: 'nosnack', n: 'Snack-free day', i: '🚫', f: d => foodLogged(d) && S.days[d].sn === 0 });
+  h.push({ k: 'comfy', n: 'Comfortable day (3+)', i: '🙂', f: d => cOf(d) != null && cOf(d) >= 3 });
+  h.push({ k: 'under', n: 'At or under calorie target', i: '🎯', f: d => foodLogged(d) && dayKcal(d) <= targetK() });
+  h.push({ k: 'floor', n: 'At or above calorie floor', i: '🛟', f: d => foodLogged(d) && dayKcal(d) >= floorK() });
+  h.push({ k: 'down', n: 'Weight down on the last weigh-in', i: '📉', f: isDown });
+  h.push({ k: 'below7', n: 'Weight under the last 7-day average', i: '📊', f: isBelow7 });
+  h.push({ k: 'logged', n: 'Logged anything', i: '📝', f: hasAny });
+  return h;
+}
+function streakOf(pred) {
+  const first = firstDate(), today = ds(0); let cur = 0, d = today; if (!pred(d)) d = sh(d, -1);
+  while (d >= first && pred(d)) { cur++; d = sh(d, -1); }
+  let best = 0, run = 0, bestEnd = null; for (let x = first; x <= today; x = sh(x, 1)) { if (pred(x)) { run++; if (run > best) { best = run; bestEnd = x; } } else run = 0; }
+  let total = 0, n = 0; for (let x = first; x <= today; x = sh(x, 1)) { n++; if (pred(x)) total++; }
+  return { cur, best, bestEnd, total, n };
+}
+function rate(pred, days) { let ok = 0, n = 0; for (let i = 0; i < days; i++) { const d = sh(ds(0), -i); if (d < firstDate()) break; if (i === 0 && !pred(d)) continue; n++; if (pred(d)) ok++; } return n ? ok / n : null; }
+
+/* ---------------------------------------------------------------------
+   10. CHART ENGINE: one drawing routine for every graph.
+   layers: line | dots | bars | band | h (horizontal rule) | v (vertical rule). A layer may carry a unit group `u`.
+   One group -> a real labelled axis. Several groups -> each is scaled to its own range (compare shapes, not heights).
+   --------------------------------------------------------------------- */
+function chart(o) {
+  const W = 320, H = o.H || 160, span = Math.max(1, o.span), groups = [...new Set(o.layers.map(l => l.u || 'a'))], real = groups.length === 1, L = real ? 44 : 10, R = 10, T = 8, B = 22, sc = {};
+  const X = x => L + x * ((W - L - R) / span), yf = o.yfmt || (v => nf(v));
+  groups.forEach(g => {
+    const vals = []; o.layers.filter(l => (l.u || 'a') === g).forEach(l => { (l.pts || []).forEach(p => { if (p) { vals.push(p.y); if (p.lo != null) vals.push(p.lo, p.hi); } }); if (l.type === 'h' && !l.free) vals.push(l.y); });
+    if (o.zero) vals.push(0);
+    let lo = vals.length ? Math.min(...vals) : 0, hi = vals.length ? Math.max(...vals) : 1; const pad = (hi - lo) * 0.08 || 1;
+    sc[g] = { lo: o.zero && lo >= 0 ? 0 : lo - pad, hi: hi + pad };
+    if (o.ymin != null && real) sc[g].lo = o.ymin; if (o.ymax != null && real) sc[g].hi = o.ymax;
+  });
+  const Y = (g, v) => T + (H - T - B) * (1 - (v - sc[g].lo) / (sc[g].hi - sc[g].lo)), g0 = groups[0], pts = l => (l.pts || []).filter(Boolean);
+  const body = o.layers.map(l => { const g = l.u || 'a', c = l.c || 'var(--ac)', p = pts(l);
+    if (l.type === 'band') { if (p.length < 2) return ''; const up = p.map(q => X(q.x).toFixed(1) + ',' + Y(g, q.hi).toFixed(1)), dn = p.slice().reverse().map(q => X(q.x).toFixed(1) + ',' + Y(g, q.lo).toFixed(1)); return `<polygon points="${up.concat(dn).join(' ')}" fill="${c}" opacity="${l.o || 0.18}"/>`; }
+    if (l.type === 'line') return p.length < 2 ? '' : `<polyline fill="none" stroke="${c}" stroke-width="${l.w || 2.6}" ${l.dash ? `stroke-dasharray="${l.dash}"` : ''} stroke-linecap="round" stroke-linejoin="round" opacity="${l.o || 1}" points="${p.map(q => X(q.x).toFixed(1) + ',' + Y(g, q.y).toFixed(1)).join(' ')}"/>`;
+    if (l.type === 'dots') return p.map(q => `<circle cx="${X(q.x).toFixed(1)}" cy="${Y(g, q.y).toFixed(1)}" r="${l.r || (p.length > 150 ? 2 : 3)}" fill="${q.c || c}" opacity="${l.o || 0.8}"/>`).join('');
+    if (l.type === 'bars') { const bw = Math.max(1.5, Math.min(l.bw || 16, (W - L - R) / (span + 1) * 0.78)), y0 = Y(g, clamp(0, sc[g].lo, sc[g].hi)); return p.map(q => { const y = Y(g, q.y); return `<rect x="${(X(q.x) - bw / 2).toFixed(1)}" y="${Math.min(y, y0).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(1, Math.abs(y - y0)).toFixed(1)}" rx="2" fill="${q.c || c}" opacity="${l.o || 0.9}"/>`; }).join(''); }
+    if (l.type === 'h') return `<path d="M${L} ${Y(g, l.y).toFixed(1)}H${W - R}" stroke="${c}" stroke-dasharray="5 4" stroke-width="1.8" opacity=".85"/>${l.t ? `<text x="${W - R}" y="${(Y(g, l.y) - 4).toFixed(1)}" text-anchor="end" font-size="10" fill="${c}">${esc(l.t)}</text>` : ''}`;
+    if (l.type === 'v') return `<path d="M${X(l.x).toFixed(1)} ${T}V${H - B}" stroke="${c}" stroke-dasharray="2 4" stroke-width="1.5" opacity=".7"/>`;
+    return ''; }).join('');
+  const axis = real ? `<text x="2" y="${(Y(g0, sc[g0].hi) + 9).toFixed(0)}" font-size="10" fill="var(--mu)">${yf(sc[g0].hi)}</text><text x="2" y="${Y(g0, sc[g0].lo).toFixed(0)}" font-size="10" fill="var(--mu)">${yf(sc[g0].lo)}</text>${sc[g0].lo < 0 && sc[g0].hi > 0 ? `<path d="M${L} ${Y(g0, 0).toFixed(1)}H${W - R}" stroke="var(--ln)" stroke-width="1.5"/>` : ''}` : '';
+  const xl = (o.xl || []).map((l, i, a) => `<text x="${X(l.x).toFixed(1)}" y="${H - 5}" font-size="10" text-anchor="${i === 0 ? 'start' : i === a.length - 1 ? 'end' : 'middle'}" fill="var(--mu)">${esc(l.t)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;margin-top:6px" role="img" aria-label="${esc(o.label || 'Graph')}">${axis}<path d="M${L} ${H - B}H${W - R}" stroke="var(--ln)" stroke-width="2"/>${body}${xl}</svg>`;
+}
+const legend = items => `<div class="mt">${items.map(i => `<span class="lg"><i style="background:${i.c}"></i>${esc(i.n)}${i.v ? ' <b>' + i.v + '</b>' : ''}</span>`).join('')}</div>`;
+const chip = (onclick, label, on, col) => `<button class="chip ${on ? 'on' : ''}" ${on && col ? `style="border-color:${col};background:${col}22"` : ''} onclick="${onclick}">${col ? `<span class="dot" style="background:${col}"></span>` : ''}${esc(label)}</button>`;
+const dl = (v, dp = 1, downGood = true, suf = '') => v == null ? '–' : `<b class="${Math.abs(v) < 0.005 ? '' : (v < 0) === downGood ? 'good' : 'bad'}">${sg(v, dp)}${suf}</b>`;
+const dates = (from, to) => { const a = []; for (let d = from; d <= to; d = sh(d, 1)) a.push(d); return a; };
+const xlabels = (from, span, long) => [{ x: 0, t: long ? monthY(from) : shortD(from) }].concat(span > 20 ? [{ x: Math.round(span / 2), t: long ? monthY(sh(from, Math.round(span / 2))) : shortD(sh(from, Math.round(span / 2))) }] : []);
+const rolling = (arr, n) => arr.map((_, i) => { const w = arr.slice(Math.max(0, i - n + 1), i + 1).filter(v => v != null); return w.length ? mean(w) : null; });
+const rangeFrom = n => { const f = firstDate(), w = WS(), first = w.length && w[0].d < f ? w[0].d : f, from = n ? sh(ds(0), -(n - 1)) : first; return from < first ? first : from; };
+const coachStrip = () => MSG ? `<div class="coach" role="status" aria-live="polite">💬 ${esc(MSG)}</div>` : '';
+
+/* ---------------------------------------------------------------------
+   11. VIEWS
+   --------------------------------------------------------------------- */
+let WR = 30, WT = ['avg', 'trend', 'proj'], CR = 30, CSER = ['wt7', 'cmf7'], HM = 'full', GH = 'weekly';
+
+/* ---------- TODAY: the check-in ---------- */
+function breakCard(b) {
+  if (!b.level || b.snoozed) return '';
+  const w = latestKg(), m = w ? Math.round(tdee(w) / 10) * 10 : null;
+  const head = b.level >= 3 ? 'Time to stop and look after yourself' : b.level === 2 ? 'A break looks like a good idea' : 'Worth thinking about a break';
+  return `<div class="card ${b.level >= 3 ? 'alert' : 'warn'}"><h3>${head}</h3>${b.reasons.map(r => `<div class="mt">• ${esc(r)}</div>`).join('')}
+   ${b.stop ? '<div class="mt">Please pause the weight loss and speak to a GP or dietitian. That is the right call, not a failure.</div>'
+     : `<div class="mt mu">What a break looks like: a week or two of eating around maintenance${m ? ' (roughly ' + nf(m) + ' kcal a day)' : ''}, with the same weigh-ins and the same comfort check, then reassess. In one trial (MATADOR, men with obesity) alternating two weeks of dieting with two weeks at maintenance led to more weight and fat lost overall than dieting straight through. A break is a tool, not giving up.</div>
+      <div class="row mt"><button class="btn g" onclick="snoozeBreak()">Remind me in ${BREAK.snoozeDays} days</button></div>`}
+   ${b.level >= 2 ? '<div class="mu sm mt">If you feel dizzy, faint, unusually cold or tired, or low in mood, or if food is becoming stressful, talk to a doctor.</div>' : ''}</div>`;
+}
+function vToday() {
+  const d = TD, isT = d === ds(0), x = S.days[d] || { m: {}, sn: 0, ex: [], ko: null, w: null, c: null }, kc = dayKcal(d), tg = targetK(), fl = floorK(), st = wStats()[d], t = trendNow(), done = planDone(d), n = S.plan.length;
+  const fullStreak = streakOf(dd2 => planDone(dd2) === n && n > 0).cur, b = isT ? breakCheck() : { level: 0 };
+  const ci = comfortIndex(comfortAvg(ds(0), 7).avg);
+  return coachStrip() + breakCard(b) + `
+  <div class="card"><div class="row sb"><button class="chip" onclick="goDay(-1)" aria-label="Previous day">‹</button><div style="text-align:center"><b>${isT ? 'Today' : pretty(d)}</b><div class="mu sm">${isT ? pretty(d) : prettyY(d)}</div></div><button class="chip" ${isT ? 'disabled' : ''} onclick="goDay(1)" aria-label="Next day">›</button></div>
+   <div class="row mt" style="justify-content:center;gap:6px"><input type="date" value="${d}" max="${ds(0)}" onchange="TD=this.value||ds(0);render()" aria-label="Pick a date" style="width:auto"><button class="chip" ${isT ? 'disabled' : ''} onclick="TD=ds(0);render()">Today</button></div></div>
+  <div class="card"><h3>⚖️ Weight</h3>
+   <div class="row mt"><label>kg<input id="tw" type="number" step="0.1" inputmode="decimal" value="${x.w != null ? x.w : ''}" placeholder="${latestKg() != null ? f1(latestKg()) : '0.0'}"></label><button class="btn" onclick="saveWeight()">Save</button>${x.w != null ? '<button class="chip" onclick="clearWeight()" aria-label="Remove weight">✕</button>' : ''}</div>
+   ${SERR ? `<div class="bad mt" role="alert">${esc(SERR)}</div>` : ''}
+   ${x.w != null && st ? `<div class="tiles t3"><div class="tile"><b>${dl(st.dPrev)}</b><span>vs last weigh-in</span></div><div class="tile"><b>${dl(st.dAvg7)}</b><span>vs last 7-day average</span></div><div class="tile"><b>${t != null ? f1(trendAt(d) || t) : '–'}</b><span>Trend, kg</span></div></div>` : '<div class="mu sm mt">Weigh yourself, then tap Save. Same time each day works best.</div>'}</div>
+  <div class="card"><div class="row sb"><h3>🍽️ Today's plan</h3><b>${done}/${n}</b></div>${bar(n ? done / n : 0)}
+   <div class="plan mt">${S.plan.map(p => `<button class="pt ${x.m[p.id] ? 'on' : ''}" aria-pressed="${!!x.m[p.id]}" onclick="togglePlan('${p.id}')"><span class="pi">${esc(p.icon)}</span> <b>${esc(p.name)}</b> <span class="mu sm">${esc(p.sub)}${p.kcal ? ' · ' + nf(p.kcal) + ' kcal' : ''}</span>${x.m[p.id] ? '<i class="tk">✓</i>' : ''}</button>`).join('')}</div>
+   ${fullStreak ? `<div class="mu sm mt">🔥 ${plural(fullStreak, 'full plan day')} in a row</div>` : ''}</div>
+  <div class="card"><h3>🍪 Snacks and anything else</h3>
+   <div class="row sb mt"><span>Snacks <span class="mu sm">(about ${nf(S.snackKcal)} kcal each)</span></span><span class="row" style="gap:8px"><button class="chip stp" onclick="snack(-1)" aria-label="One fewer snack">−</button><b style="min-width:26px;text-align:center;font-size:20px">${x.sn}</b><button class="chip stp" onclick="snack(1)" aria-label="One more snack">+</button></span></div>
+   ${x.ex.map((e, i) => `<div class="meal"><span>${esc(e.n)}</span><span>${nf(e.k)} kcal <button class="chip" onclick="delEx(${i})" aria-label="Remove ${esc(e.n)}">✕</button></span></div>`).join('')}
+   <div class="row mt"><label style="flex:2 1 120px">Something else<input id="en" maxlength="30" placeholder="Toast, pizza, wine..."></label><label style="min-width:84px">kcal<input id="ek" type="number" inputmode="numeric"></label><button class="btn g" onclick="addEx()">Add</button></div>
+   <details class="mt" ${x.ko != null ? 'open' : ''}><summary style="cursor:pointer" class="mu">I already know today's total</summary><div class="row mt"><label>Total kcal for the day<input id="ko" type="number" inputmode="numeric" value="${x.ko != null ? x.ko : ''}" placeholder="Leave blank to add it up for me"></label><button class="btn g" onclick="saveKo()">Set</button></div></details></div>
+  <div class="card"><div class="row sb"><h3>🔥 Calories ${isT ? 'so far' : ''}</h3><b>${nf(kc)} kcal</b></div>${bar(kc / Math.max(tg, 1), kc > tg ? 'hi' : kc < fl && foodLogged(d) ? 'wn' : 'ok')}
+   <div class="mu sm">Target ${nf(tg)} · floor ${nf(fl)}${foodLogged(d) ? ' · ' + (kc < fl ? `<span class="bad">${nf(fl - kc)} under your floor</span>` : kc <= tg ? '<span class="good">in range</span>' : `${nf(kc - tg)} over target`) : ''}</div>
+   <div class="mu sm">${nf(S.plan.reduce((s, p) => s + (x.m[p.id] ? p.kcal : 0), 0))} plan + ${nf(x.sn * S.snackKcal)} snacks + ${nf(x.ex.reduce((s, e) => s + e.k, 0))} other${x.ko != null ? ' (your typed total is being used instead)' : ''}</div></div>
+  <div class="card"><h3>🙂 How comfortable did ${isT ? 'today' : 'that day'} feel?</h3><div class="mu sm">Your evening check-in. This is what tells me when to suggest a break.</div>
+   <div class="row mt" style="gap:6px;justify-content:space-between">${COMFORT.map((c, i) => `<button class="cm ${x.c === i + 1 ? 'on' : ''}" aria-pressed="${x.c === i + 1}" aria-label="${c[1]}, ${i + 1} of 5" onclick="setComfort(${i + 1})"><span style="font-size:26px">${c[0]}</span><span class="sm">${c[1]}</span></button>`).join('')}</div>
+   ${ci != null ? `<div class="mu sm mt">Comfort index, last 7 days: <b>${ci}/100</b> (${f1(comfortAvg(ds(0), 7).avg)} out of 5)</div>` : ''}</div>`;
+}
+
+/* ---------- STREAKS: the consecutive-progress page ---------- */
+function strip(f, n) { let s = ''; for (let i = n - 1; i >= 0; i--) { const d = sh(ds(0), -i), on = d >= firstDate() && f(d); s += `<i class="sq ${on ? 'on' : d < firstDate() ? 'no' : ''}" title="${pretty(d)}"></i>`; } return `<div class="strip">${s}</div>`; }
+function heat(h) {
+  const today = ds(0), start = monday(sh(today, -7 * 11)), f = h.frac || (d => h.f(d) ? 1 : 0); let cols = '';
+  for (let w = 0; w < 12; w++) { let col = ''; for (let i = 0; i < 7; i++) { const d = sh(start, w * 7 + i), fut = d > today, v = fut ? 0 : f(d), cl = fut ? 'fut' : d < firstDate() ? 'no' : v >= 1 ? 'l4' : v >= 0.66 ? 'l3' : v >= 0.33 ? 'l2' : v > 0 ? 'l1' : ''; col += `<i class="hc ${cl}" title="${pretty(d)}"></i>`; } cols += `<div class="hcol">${col}</div>`; }
+  return `<div class="heat">${cols}</div><div class="mu sm">Mon to Sun, oldest on the left. Darker is more of the plan done.</div>`;
+}
+function milestones() {
+  const out = [], full = streakOf(d => planDone(d) === S.plan.length && S.plan.length > 0), wk = streakOf(d => wOf(d) != null), s = startKg(), t = trendNow(), lost = s != null && t != null ? s - t : 0;
+  [3, 7, 14, 21, 28, 42, 60, 100].forEach(n => out.push({ i: '🔥', t: `${n} full plan days in a row`, ok: full.best >= n }));
+  [7, 14, 30, 60, 100].forEach(n => out.push({ i: '⚖️', t: `${n} weigh-ins in a row`, ok: wk.best >= n }));
+  [1, 2, 5, 10, 15, 20].forEach(n => out.push({ i: '📉', t: `${n} kg down on your trend`, ok: lost >= n }));
+  if (s) [0.05, 0.1].forEach(p => out.push({ i: '🏅', t: `${pc(p)}% of your body weight lost`, ok: lost >= s * p }));
+  if (s) { const b0 = bmiOf(s); [[BMI_OBESE, 'out of the obese BMI range'], [BMI_OVER, 'into the healthy BMI range']].forEach(([lim, txt]) => { if (b0 >= lim) out.push({ i: '🎉', t: `BMI ${txt}`, ok: t != null && bmiOf(t) < lim }); }); }
+  const cf = streakOf(d => cOf(d) != null && cOf(d) >= 3).best; [7, 14].forEach(n => out.push({ i: '🙂', t: `${n} comfortable days in a row`, ok: cf >= n }));
+  return out;
+}
+function vStreaks() {
+  const hs = habits(), full = hs.find(h => h.k === 'full'), wk = hs.find(h => h.k === 'weigh'), sF = streakOf(full.f), sW = streakOf(wk.f), hm = hs.find(h => h.k === HM) || full;
+  const weeks = []; for (let i = 11; i >= 0; i--) { const a = sh(monday(ds(0)), -7 * i); weeks.push({ a, x: 11 - i }); }
+  const wp = (f, a) => { let ok = 0, n = 0; for (let j = 0; j < 7; j++) { const d = sh(a, j); if (d > ds(0) || d < firstDate()) continue; n++; if (f(d)) ok++; } return n ? ok / n * 100 : null; };
+  const ms = milestones(), got = ms.filter(m => m.ok).length;
+  return coachStrip() + `<div class="card"><h2>Streaks</h2><div class="mu">Consecutive days of everything worth tracking. A streak carries on until the day is over.</div>
+   <div class="tiles t2"><div class="tile"><b>${sF.cur} 🔥</b><span>Full plan days in a row (best ${sF.best})</span></div><div class="tile"><b>${sW.cur} ⚖️</b><span>Weigh-ins in a row (best ${sW.best})</span></div></div></div>
+  ${hs.map(h => { const s = streakOf(h.f), r7 = rate(h.f, 7), r30 = rate(h.f, 30);
+    return `<div class="card" style="margin-top:10px"><div class="row sb"><b>${esc(h.i)} ${esc(h.n)}</b><span class="big" style="font-size:24px">${s.cur}<span class="mu sm" style="font-weight:600"> in a row</span></span></div>
+     <div class="mu sm">Best ${s.best} · ${s.total} of ${s.n} days${r7 != null ? ` · last 7: ${pc(r7)}%` : ''}${r30 != null ? ` · last 30: ${pc(r30)}%` : ''}</div>${strip(h.f, 28)}</div>`; }).join('')}
+  <div class="card"><h3>Calendar</h3><div class="row mt" style="gap:6px">${hs.map(h => chip(`HM='${h.k}';render()`, h.i + ' ' + h.n.replace(/ \(.*\)/, ''), HM === h.k, '')).join('')}</div>${heat(hm)}</div>
+  <div class="card"><h3>Week by week</h3>${chart({ label: 'Weekly consistency', span: 11, ymin: 0, ymax: 100, yfmt: v => Math.round(v) + '%', xl: [{ x: 0, t: shortD(weeks[0].a) }, { x: 5, t: shortD(weeks[5].a) }, { x: 11, t: 'This week' }], layers: [
+     { type: 'line', c: '#4C7A46', w: 3, pts: weeks.map(w => { const v = wp(full.f, w.a); return v == null ? null : { x: w.x, y: v }; }) }, { type: 'line', c: '#3E7CB1', w: 2.2, pts: weeks.map(w => { const v = wp(wk.f, w.a); return v == null ? null : { x: w.x, y: v }; }) },
+     { type: 'line', c: '#C2477A', w: 2.2, pts: weeks.map(w => { const v = wp(hs.find(h => h.k === 'comfy').f, w.a); return v == null ? null : { x: w.x, y: v }; }) }] })}
+   ${legend([{ c: '#4C7A46', n: 'Full plan days' }, { c: '#3E7CB1', n: 'Weigh-ins' }, { c: '#C2477A', n: 'Comfortable days' }])}<div class="mu sm">Percent of each week's days.</div></div>
+  <div class="card"><div class="row sb"><h3>Milestones</h3><b>${got}/${ms.length}</b></div>${ms.map(m => `<div class="meal"><span class="${m.ok ? '' : 'mu'}">${m.ok ? m.i : '○'} ${esc(m.t)}</span><b class="${m.ok ? 'good' : 'mu'}">${m.ok ? 'done' : ''}</b></div>`).join('')}</div>`;
+}
+
+/* ---------- WEIGHT: every number, and the graphs ---------- */
+function weekRows(n) {
+  const rows = []; for (let i = n - 1; i >= 0; i--) { const a = sh(monday(ds(0)), -7 * i), b = sh(a, 6), ws = WS().filter(x => x.d >= a && x.d <= b); rows.push({ a, avg: ws.length ? mean(ws.map(x => x.w)) : null, n: ws.length }); }
+  let prev = null; rows.forEach(r => { r.d = r.avg != null && prev != null ? r.avg - prev : null; if (r.avg != null) prev = r.avg; }); return rows;
+}
+function vWeight() {
+  const a = WS(), l = latest(); if (!l) return coachStrip() + `<div class="card"><h2>Weight</h2><div class="mu mt">Add your first weigh-in on the Today tab and every weight number and graph appears here.</div></div>`;
+  const today = ds(0), t = trendNow(), s = startKg(), st = wStats()[l.d] || {}, r = rateNow(), bmi = bmiOf(t), g = S.p.goalKg, lo = a.reduce((m, x) => x.w < m.w ? x : m, a[0]), hi = a.reduce((m, x) => x.w > m.w ? x : m, a[0]);
+  const w7 = avgW(l.d, 7), p7 = avgW(sh(l.d, -7), 7), w14 = avgW(l.d, 14), p14 = avgW(sh(l.d, -14), 14), w30 = avgW(l.d, 30);
+  const gd = goalDate(), proj = [14, 30, 60, 90].map(n => [n, project(n)]), cm = calorieModel(), wk = weekRows(12), diffs = a.filter(x => (wStats()[x.d] || {}).dPrev != null).slice(-14).map(x => wStats()[x.d].dPrev);
+  const from = rangeFrom(WR), H = WT.includes('proj') ? (WR === 14 ? 14 : WR === 30 ? 28 : 56) : 0, span = dd(from, today) + H, rd = dates(from, today), wm = Object.fromEntries(a.map(x => [x.d, x.w]));
+  const lay = [];
+  if (WT.includes('proj') && r) { const ps = [0, Math.round(H / 4), Math.round(H / 2), Math.round(H * 3 / 4), H].map(k => { const p = project(k); return p ? { x: dd(from, today) + k, y: p.mid, lo: p.lo, hi: p.hi } : null; }); lay.push({ type: 'band', c: '#3E7CB1', pts: ps, o: 0.16 }, { type: 'line', c: '#3E7CB1', w: 2.4, dash: '3 5', pts: ps }); }
+  if (g > 0 && g >= Math.min(lo.w, t) - 4) lay.push({ type: 'h', y: g, c: '#4C7A46', t: 'goal ' + f1(g) });
+  if (WT.includes('avg')) lay.push({ type: 'line', c: '#D9622B', w: 2.4, pts: rd.map((d, i) => { const v = avgW(d, 7); return v == null || d < a[0].d ? null : { x: i, y: v }; }) });
+  if (WT.includes('trend')) lay.push({ type: 'line', c: '#3E7CB1', w: 3.2, pts: rd.map((d, i) => { const v = trendAt(d); return v == null ? null : { x: i, y: v }; }) });
+  if (WT.includes('dots')) lay.push({ type: 'dots', c: '#7C93A8', pts: rd.map((d, i) => wm[d] != null ? { x: i, y: wm[d] } : null) });
+  if (H) lay.push({ type: 'v', x: dd(from, today), c: 'var(--mu)' });
+  const dFrom = rangeFrom(60), dd_ = dates(dFrom, today).map((d, i) => { const v = (wStats()[d] || {}).dPrev; return v == null ? null : { x: i, y: v, c: v < 0 ? '#4C7A46' : '#D9622B' }; });
+  const vFrom = rangeFrom(60), vv = dates(vFrom, today).map((d, i) => { const v = (wStats()[d] || {}).dAvg7; return v == null ? null : { x: i, y: v, c: v < 0 ? '#4C7A46' : '#D9622B' }; });
+  const near = k => { const d = sh(l.d, -k); for (const o of [0, 1, -1]) { const v = wm[sh(d, o)]; if (v != null) return v; } return null; };
+  const row = (n, v, vs) => `<tr><td>${n}</td><td>${v != null ? f1(v) : '–'}</td><td>${dl(v != null ? l.w - v : null, 2)}</td></tr>`;
+  return coachStrip() + `
+  <div class="card"><h2 style="margin:0">Weight</h2><div class="mu">Latest weigh-in ${pretty(l.d)}${l.d !== today ? ' (' + plural(dd(l.d, today), 'day') + ' ago)' : ''}</div>
+   <div class="big mt">${f1(l.w)} <span class="mu" style="font-size:16px">kg</span></div>
+   <div class="tiles t3"><div class="tile"><b>${f1(t)}</b><span>Trend, kg</span></div><div class="tile"><b>${dl(st.dPrev, 2)}</b><span>vs last weigh-in${st.gap > 1 ? ' (' + st.gap + 'd)' : ''}</span></div><div class="tile"><b>${dl(st.dAvg7, 2)}</b><span>vs previous 7-day avg</span></div>
+   <div class="tile"><b>${dl(w7 != null && p7 != null ? w7 - p7 : null, 2)}</b><span>7-day avg vs week before</span></div><div class="tile"><b>${dl(w14 != null && p14 != null ? w14 - p14 : null, 2)}</b><span>14-day avg vs fortnight before</span></div><div class="tile"><b>${dl(s - 0 != null ? l.w - s : null, 1)}</b><span>Since your first weigh-in</span></div>
+   <div class="tile"><b>${r ? dl(r.b * 7, 2) : '–'}</b><span>kg a week, ${r ? r.days + '-day fit' : 'need more weigh-ins'}</span></div><div class="tile"><b>${r ? dl(r.b * 7 / l.w * 100, 2, true, '%') : '–'}</b><span>of body weight a week</span></div><div class="tile"><b>${g > 0 ? pc(clamp((s - t) / Math.max(0.1, s - g), 0, 1)) + '%' : '–'}</b><span>of the way to goal</span></div></div></div>
+  <div class="card"><div class="row sb"><h3>Over time</h3><div class="row" style="gap:4px">${[[14, '2W'], [30, '1M'], [90, '3M'], [0, 'All']].map(o => `<button class="chip ${WR === o[0] ? 'on' : ''}" onclick="WR=${o[0]};render()">${o[1]}</button>`).join('')}</div></div>
+   <div class="row mt" style="gap:6px">${[['dots', 'Weigh-ins', '#7C93A8'], ['avg', '7-day average', '#D9622B'], ['trend', 'Trend', '#3E7CB1'], ['proj', 'Projection', '#3E7CB1']].map(([k, n, c]) => chip(`wtog('${k}')`, n, WT.includes(k), c)).join('')}</div>
+   ${chart({ label: 'Weight over time', span, yfmt: f1, layers: lay, xl: xlabels(from, span, span > 120).concat([{ x: span, t: H ? '+' + H + 'd' : 'Today' }]) })}
+   <div class="mu sm">${WT.includes('proj') ? (r ? `The shaded band is the likely range (about 80%) if your recent rate of ${f2(r.b * 7)} kg a week continues.` : 'The projection appears once you have a few weeks of weigh-ins.') : ''}</div></div>
+  <div class="card"><h3>Compared with the days before</h3><div class="mu sm">Your latest weigh-in against each of these.</div>
+   <table class="tbl"><tr><th></th><th>Was</th><th>Change</th></tr>${[[1, 'Yesterday'], [2, '2 days ago'], [3, '3 days ago'], [7, 'A week ago'], [14, '2 weeks ago'], [30, 'A month ago']].map(([k, n]) => row(n, near(k))).join('')}
+   <tr><td>Previous 7-day average</td><td>${p7 != null && st.dAvg7 != null ? f1(l.w - st.dAvg7) : '–'}</td><td>${dl(st.dAvg7, 2)}</td></tr><tr><td>14-day average</td><td>${w14 != null ? f1(w14) : '–'}</td><td>${dl(w14 != null ? l.w - w14 : null, 2)}</td></tr><tr><td>30-day average</td><td>${w30 != null ? f1(w30) : '–'}</td><td>${dl(w30 != null ? l.w - w30 : null, 2)}</td></tr></table></div>
+  <div class="card"><h3>Day to day</h3><div class="mu sm">Change on the previous weigh-in. Green is down.</div>${chart({ label: 'Daily change', span: dd(dFrom, today), zero: true, yfmt: v => sg(v, 1), layers: [{ type: 'bars', pts: dd_ }], xl: xlabels(dFrom, dd(dFrom, today)).concat([{ x: dd(dFrom, today), t: 'Today' }]) })}
+   <div class="tiles t3"><div class="tile"><b>${diffs.length ? f2(sd(diffs)) : '–'}</b><span>Typical swing, kg (14 days)</span></div><div class="tile"><b>${streakOf(isDown).cur}</b><span>Down on last weigh-in, in a row</span></div><div class="tile"><b>${streakOf(isBelow7).cur}</b><span>Under the 7-day average, in a row</span></div></div></div>
+  <div class="card"><h3>Against the last 7 days</h3><div class="mu sm">Each weigh-in minus the average of the 7 days before it. Below zero means you beat your recent level.</div>${chart({ label: 'Versus previous 7-day average', span: dd(vFrom, today), zero: true, yfmt: v => sg(v, 1), layers: [{ type: 'bars', pts: vv }], xl: xlabels(vFrom, dd(vFrom, today)).concat([{ x: dd(vFrom, today), t: 'Today' }]) })}</div>
+  <div class="card"><h3>Week by week</h3><table class="tbl"><tr><th>Week of</th><th>Average</th><th>Change</th><th>Weigh-ins</th></tr>${wk.slice().reverse().map(w => `<tr><td>${shortD(w.a)}</td><td>${w.avg != null ? f1(w.avg) : '–'}</td><td>${dl(w.d, 2)}</td><td>${w.n}</td></tr>`).join('')}</table></div>
+  <div class="card"><h3>Where it's heading</h3>${r ? `<table class="tbl"><tr><th>In</th><th>Likely</th><th>Range</th><th>BMI</th></tr>${proj.map(([n, p]) => p ? `<tr><td>${n} days</td><td><b>${f1(p.mid)}</b></td><td>${f1(p.lo)}–${f1(p.hi)}</td><td>${f1(bmiOf(p.mid))}</td></tr>` : '').join('')}</table>
+    ${proj.some(([, p]) => p && p.clamped) ? `<div class="warnbox">Projections stop at BMI ${BMI_UNDER} (${f1(minKg())} kg). I won't project you below a healthy weight.</div>` : ''}
+    ${g > 0 && gd ? `<div class="note">${gd.done ? 'You are at or under your goal weight. 🎉' : gd.mid ? `At your current rate you reach ${f1(g)} kg around <b>${prettyY(gd.mid)}</b> (${plural(Math.round(gd.midDays), 'day')}).${gd.early && gd.late ? ` Likely window: ${prettyY(gd.early)} to ${prettyY(gd.late)}.` : gd.early ? ` As early as ${prettyY(gd.early)}.` : ''}` : 'Your weight is not trending down yet, so there is no goal date.'}</div>` : '<div class="mu sm mt">Set a goal weight in Settings to get a goal date.</div>'}
+    <div class="mu sm mt">Rates: ${[7, 14, 28].map(n => { const q = regress(n); return `${n}-day ${q ? sg(q.b * 7, 2) + ' kg/wk' : '–'}`; }).join(' · ')}${a.length > 5 ? ` · since the start ${sg((l.w - s) / Math.max(1, dd(a[0].d, l.d)) * 7, 2)} kg/wk` : ''}</div>` : '<div class="mu mt">Needs about two weeks of weigh-ins (at least four in a fortnight).</div>'}
+   ${cm ? `<div class="note mt"><b>Calories vs the scale.</b> Your last ${plural(cm.n, 'logged day')} averaged ${nf(cm.avg)} kcal against roughly ${nf(cm.tdee)} to maintain. That predicts about ${sg(-cm.perWeek, 2)} kg a week${r ? `; your scale shows ${sg(r.b * 7, 2)}` : ''}.${r && Math.abs(cm.perWeek + r.b * 7) > 0.4 ? ' A big gap usually means under-logged food or water weight.' : ''}</div>` : ''}</div>
+  <div class="card"><h3>The numbers</h3><div class="tiles t3"><div class="tile"><b>${f1(lo.w)}</b><span>Lowest, ${shortD(lo.d)}</span></div><div class="tile"><b>${f1(hi.w)}</b><span>Highest, ${shortD(hi.d)}</span></div><div class="tile"><b>${dd(lo.d, today)}</b><span>Days since your lowest</span></div>
+   <div class="tile"><b>${f1(bmi)}</b><span>BMI, ${bmiCat(bmi).toLowerCase()}</span></div><div class="tile"><b>${f1(wAtBmi(BMI_OVER))}</b><span>kg at BMI 25</span></div><div class="tile"><b>${f1(wAtBmi(22.5))}</b><span>kg at BMI 22.5</span></div>
+   <div class="tile"><b>${a.length}</b><span>Weigh-ins</span></div><div class="tile"><b>${f1(avgW(today, 365) || l.w)}</b><span>Average, last year</span></div><div class="tile"><b>${f1(l.w - t)}</b><span>Today vs trend, kg</span></div></div></div>`;
+}
+
+/* ---------- BODY: composition, metabolism, joints ---------- */
+function vBody() {
+  const l = latest(); if (!l) return coachStrip() + `<div class="card"><h2>Body</h2><div class="mu mt">Add a weigh-in on the Today tab and your body-fat, metabolism and joint numbers appear here.</div></div>`;
+  const t = trendNow(), s = startKg(), g = S.p.goalKg, bmi = bmiOf(t), b0 = bfAt(t), bs = bfAt(s), bg = g > 0 ? bfAt(g) : null, a = bfAnchor(), pj = [30, 60, 90].map(n => [n, project(n)]), r = rateNow();
+  const days = r ? [0, 14, 28, 42, 56, 70, 84] : [], bfp = days.map(k => { const p = project(k); const x = p ? bfAt(p.mid) : null; return x ? { x: k, y: x.pct, lo: bfAt(p.hi).pct, hi: bfAt(p.lo).pct } : null; });
+  const m0 = oaMult(bmi), ms = oaMult(bmiOf(s)), mg = g > 0 ? oaMult(bmiOf(g)) : null, lost = s - t, steps = S.p.steps;
+  return coachStrip() + `
+  <div class="card"><h2 style="margin:0">Body</h2><div class="mu">Estimates from published averages, not measurements. Treat them as a compass, not a scan.</div>
+   <div class="tiles t3"><div class="tile"><b>${f1(bmi)}</b><span>BMI, ${bmiCat(bmi).toLowerCase()}</span></div><div class="tile"><b>${b0 ? f1(b0.pct) + '%' : '–'}</b><span>Body fat (about ±4 points)</span></div><div class="tile"><b>${b0 ? f1(b0.fm) : '–'}</b><span>Fat mass, kg</span></div>
+   <div class="tile"><b>${b0 ? f1(b0.ffm) : '–'}</b><span>Lean mass, kg</span></div><div class="tile"><b>${nf(bmr(t))}</b><span>Resting burn, kcal</span></div><div class="tile"><b>${nf(tdee(t))}</b><span>Maintenance, kcal</span></div></div>
+   <div class="mu sm mt">${a && a.measured ? 'Based on the body-fat reading you entered.' : 'Starting point from the Deurenberg BMI formula (age, sex, BMI). It runs a little high at higher weights. Enter a measured reading in Settings to anchor it.'} Lean tissue is assumed to be ${pc(S.p.leanFrac)}% of any weight lost.</div></div>
+  <div class="card"><h3>Body fat, start to goal</h3><table class="tbl"><tr><th></th><th>Weight</th><th>Body fat</th><th>Fat</th><th>Lean</th></tr>
+   ${[['Start', s, bs], ['Now (trend)', t, b0], g > 0 ? ['Goal', g, bg] : null].filter(Boolean).map(([n, w, x]) => `<tr><td>${n}</td><td>${f1(w)}</td><td>${x ? f1(x.pct) + '%' : '–'}</td><td>${x ? f1(x.fm) : '–'}</td><td>${x ? f1(x.ffm) : '–'}</td></tr>`).join('')}</table>
+   ${bs && b0 && lost > 0 ? `<div class="note">Of the ${f1(lost)} kg lost so far, roughly <b>${f1(bs.fm - b0.fm)} kg</b> is fat and <b>${f1(bs.ffm - b0.ffm)} kg</b> lean tissue.</div>` : ''}</div>
+  <div class="card"><h3>Body-fat projection</h3>${r ? `${chart({ label: 'Projected body fat', span: 84, yfmt: v => f1(v) + '%', layers: [{ type: 'band', c: '#8E6BBF', pts: bfp, o: 0.18 }, { type: 'line', c: '#8E6BBF', w: 3, pts: bfp }], xl: [{ x: 0, t: 'Now' }, { x: 42, t: '6 wks' }, { x: 84, t: '12 wks' }] })}
+   <table class="tbl"><tr><th>In</th><th>Weight</th><th>Body fat</th></tr>${pj.map(([n, p]) => { const x = p ? bfAt(p.mid) : null; return p ? `<tr><td>${n} days</td><td>${f1(p.mid)}</td><td><b>${x ? f1(x.pct) + '%' : '–'}</b></td></tr>` : ''; }).join('')}</table>
+   <div class="mu sm mt">Follows your projected weight on the Weight tab. Losing very fast, or eating little protein, makes more of the loss lean tissue, so treat the fat share as a best case.</div>` : '<div class="mu mt">Appears once your weight rate can be projected (a few weeks of weigh-ins).</div>'}</div>
+  <div class="card"><h3>Joints and osteoarthritis</h3><div class="mu">I can't give you a personal percentage chance. These are the published relative risks and loads for your weight.</div>
+   <table class="tbl"><tr><th></th><th>BMI</th><th>Knee OA risk vs healthy weight</th></tr>${[['Start', bmiOf(s), ms], ['Now', bmi, m0], mg ? ['Goal', bmiOf(g), mg] : null].filter(Boolean).map(([n, b, m]) => `<tr><td>${n}</td><td>${f1(b)}</td><td><b>${m.rr === 1 ? '1× (the reference)' : f1(m.rr) + '×'}</b>${m.rr > 1 ? `<div class="mu sm">${m.cat}, range ${f1(m.lo)}–${f1(m.hi)}×</div>` : `<div class="mu sm">${m.cat}</div>`}</td></tr>`).join('')}</table>
+   <div class="mu sm mt">From a meta-analysis of prospective studies: knee OA risk is about 2.5× higher in overweight and 4.5× higher in obese adults than in normal weight, and about 35% higher for every 5 BMI points. A separate meta-analysis in over-50s found about 2× (overweight) and 2.7× (obese) for new knee pain. It's about relative odds in groups, not your own chance, and age, past knee injury and sex matter too.</div>
+   <div class="tiles t3"><div class="tile"><b>${f1(kneeLoad(t))}</b><span>kg of force through a knee per step now</span></div><div class="tile"><b>${lost > 0 ? f1(kneeLoad(lost)) : '0.0'}</b><span>kg less per step since you started</span></div><div class="tile"><b>${lost > 0 ? f1(kneeLoad(lost) * steps / 1000) : '0.0'}</b><span>tonnes less load per knee per day (${nf(steps)} steps)</span></div></div>
+   <div class="mu sm mt">Each 1 kg lost takes about 4 kg off the force through the knee with every step (Messier 2005, overweight adults over 60 with knee OA, so it's a rough guide for you). In people who already have knee OA, losing 5% of body weight is linked with less pain and 10% with more.</div></div>
+  <div class="card"><h3>Energy</h3><div class="tiles t3"><div class="tile"><b>${nf(targetK(t))}</b><span>Calorie target</span></div><div class="tile"><b>${nf(floorK())}</b><span>Calorie floor</span></div><div class="tile"><b>${nf(S.plan.reduce((x, p) => x + p.kcal, 0))}</b><span>Your plan, kcal a day</span></div></div>
+   ${S.plan.reduce((x, p) => x + p.kcal, 0) < floorK() ? `<div class="warnbox">Your plan on its own comes to ${nf(S.plan.reduce((x, p) => x + p.kcal, 0))} kcal, under your ${nf(floorK())} floor. That is a very low intake. If you keep it up for more than a short spell, do it with a doctor or dietitian, and keep an eye on your comfort score.</div>` : ''}
+   <div class="mu sm mt">Healthy-weight range for your height (BMI ${BMI_UNDER}–24.9): <b>${f1(wAtBmi(BMI_UNDER))}–${f1(wAtBmi(24.9))} kg</b>.</div></div>`;
+}
+
+/* ---------- CHARTS: explorer + the fixed set ---------- */
+const SERIES = [
+  { k: 'wt', n: 'Weight', u: 'kg', c: '#7C93A8', dots: true }, { k: 'wt7', n: 'Weight 7-day avg', u: 'kg', c: '#D9622B', w: 2.8 }, { k: 'wtr', n: 'Weight trend', u: 'kg', c: '#3E7CB1', w: 3 },
+  { k: 'kcal', n: 'Calories', u: 'kcal', c: '#E8946A', w: 1.6 }, { k: 'kcal7', n: 'Calories 7-day avg', u: 'kcal', c: '#B4690E', w: 3 },
+  { k: 'cmf', n: 'Comfort', u: 'score', c: '#C58AA8', dots: true }, { k: 'cmf7', n: 'Comfort 7-day avg', u: 'score', c: '#C2477A', w: 3 },
+  { k: 'sn', n: 'Snacks', u: 'count', c: '#8E6BBF', w: 1.8 }, { k: 'plan', n: 'Plan done (%)', u: 'pct', c: '#4C7A46', w: 2.6 }];
+function seriesVals(k, ds_) {
+  const raw = f => ds_.map(d => f(d)), win = (f, n) => ds_.map((d, i) => { const v = []; for (let j = 0; j < n; j++) { const x = f(sh(d, -j)); if (x != null) v.push(x); } return v.length ? mean(v) : null; });
+  switch (k) { case 'wt': return raw(wOf); case 'wt7': return win(wOf, 7); case 'wtr': return raw(trendAt); case 'kcal': return raw(d => foodLogged(d) ? dayKcal(d) : null); case 'kcal7': return win(d => foodLogged(d) ? dayKcal(d) : null, 7);
+    case 'cmf': return raw(cOf); case 'cmf7': return win(cOf, 7); case 'sn': return raw(d => foodLogged(d) ? S.days[d].sn : null); case 'plan': return raw(d => foodLogged(d) || hasAny(d) ? planFrac(d) * 100 : null); }
+  return ds_.map(() => null);
+}
+function vCharts() {
+  const today = ds(0), from = rangeFrom(CR), span = Math.max(1, dd(from, today)), ds_ = dates(from, today), sel = SERIES.filter(s => CSER.includes(s.k));
+  const layers = sel.map(s => ({ type: s.dots ? 'dots' : 'line', u: s.u, c: s.c, w: s.w, pts: seriesVals(s.k, ds_).map((y, i) => y == null ? null : { x: i, y }) })), mixed = new Set(sel.map(s => s.u)).size > 1;
+  const f30 = rangeFrom(30), s30 = dd(f30, today), d30 = dates(f30, today);
+  const wkn = []; for (let i = 11; i >= 0; i--) wkn.push({ a: sh(monday(today), -7 * i), x: 11 - i });
+  const wpc = (f, a) => { let ok = 0, n = 0; for (let j = 0; j < 7; j++) { const d = sh(a, j); if (d > today || d < firstDate()) continue; n++; if (f(d)) ok++; } return n ? { x: 0, y: ok / n * 100 } : null; };
+  const f60 = rangeFrom(60), d60 = dates(f60, today), s60 = dd(f60, today);
+  // what goes with a good day
+  const groups = [['Porridge ticked', d => S.days[d].m[S.plan[0] && S.plan[0].id]], ['No porridge', d => !S.days[d].m[S.plan[0] && S.plan[0].id]], ['Full plan', d => planDone(d) === S.plan.length], ['Plan missed', d => planDone(d) < S.plan.length], ['No snacks', d => S.days[d].sn === 0], ['1 snack', d => S.days[d].sn === 1], ['2+ snacks', d => S.days[d].sn >= 2], ['Under floor', d => dayKcal(d) < floorK()], ['Floor or above', d => dayKcal(d) >= floorK()]];
+  const scored = Object.keys(S.days).filter(d => cOf(d) != null && foodLogged(d));
+  const wdn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], wd = wdn.map((n, i) => { const ds2 = Object.keys(S.days).filter(d => (new Date(d + 'T12:00:00').getDay() + 6) % 7 === i && hasAny(d)); const m = f => { const v = ds2.map(f).filter(x => x != null); return v.length ? mean(v) : null; }; return { n, cm: m(cOf), sn: m(d => foodLogged(d) ? S.days[d].sn : null), kc: m(d => foodLogged(d) ? dayKcal(d) : null), dw: m(d => (wStats()[d] || {}).dPrev), c: ds2.length }; });
+  const months = {}; Object.keys(S.days).filter(hasAny).forEach(d => { (months[d.slice(0, 7)] = months[d.slice(0, 7)] || []).push(d); });
+  const mrows = Object.keys(months).sort().reverse().slice(0, 12).map(m => { const dl_ = months[m], ws = dl_.filter(d => wOf(d) != null).map(wOf), kc = dl_.filter(foodLogged).map(dayKcal), cs = dl_.map(cOf).filter(x => x != null); return { m, w: mean(ws), kc: mean(kc), cm: mean(cs), full: dl_.filter(d => planDone(d) === S.plan.length && S.plan.length).length, n: dl_.length }; });
+  return coachStrip() + `
+  <div class="card"><h2 style="margin:0">Charts</h2><div class="mu">Pick any mix of lines for one graph.</div>
+   <div class="row mt" style="gap:6px">${SERIES.map(s => chip(`ctog('${s.k}')`, s.n, CSER.includes(s.k), s.c)).join('')}</div>
+   <div class="row mt" style="gap:4px">${[[14, '2W'], [30, '1M'], [90, '3M'], [365, '1Y'], [0, 'All']].map(o => `<button class="chip ${CR === o[0] ? 'on' : ''}" onclick="CR=${o[0]};render()">${o[1]}</button>`).join('')}</div>
+   ${sel.length ? chart({ label: 'Explorer', span, layers, yfmt: v => nf(v), xl: xlabels(from, span, span > 120).concat([{ x: span, t: 'Today' }]) }) + legend(sel.map(s => ({ c: s.c, n: s.n, v: (() => { const v = seriesVals(s.k, [today, sh(today, -1), sh(today, -2), sh(today, -3)]).find(x => x != null); return v == null ? '' : s.u === 'kg' ? f1(v) : s.u === 'score' ? f1(v) : nf(v); })() }))) + `<div class="mu sm">${mixed ? 'Different units, so each is scaled to its own range: compare shapes, not heights. ' : ''}Numbers in the key are the latest values.</div>` : '<div class="mu mt">Pick at least one line.</div>'}</div>
+  <div class="card"><h3>Calories</h3>${chart({ label: 'Calories per day', span: s30, zero: true, yfmt: nf, layers: [{ type: 'bars', c: '#E8946A', pts: d30.map((d, i) => foodLogged(d) ? { x: i, y: dayKcal(d), c: dayKcal(d) < floorK() ? '#8FA3B5' : dayKcal(d) > targetK() ? '#D9622B' : '#4C7A46' } : null) }, { type: 'h', y: targetK(), c: '#D9622B', t: 'target ' + nf(targetK()) }, { type: 'h', y: floorK(), c: '#3E7CB1', t: 'floor ' + nf(floorK()) }, { type: 'line', c: 'var(--ink)', w: 2.2, pts: seriesVals('kcal7', d30).map((y, i) => y == null ? null : { x: i, y }) }], xl: xlabels(f30, s30).concat([{ x: s30, t: 'Today' }]) })}
+   <div class="mu sm">Green is in range, orange is over target, grey is under your floor. The dark line is the 7-day average.</div></div>
+  <div class="card"><h3>Snacks</h3>${chart({ label: 'Snacks per day', span: s30, zero: true, yfmt: v => String(Math.round(v)), layers: [{ type: 'bars', c: '#8E6BBF', pts: d30.map((d, i) => foodLogged(d) ? { x: i, y: S.days[d].sn } : null) }, { type: 'line', c: 'var(--ink)', w: 2.2, pts: seriesVals('sn', d30).map((_, i) => { const v = []; for (let j = 0; j < 7; j++) { const d = sh(d30[i], -j); if (foodLogged(d)) v.push(S.days[d].sn); } return v.length ? { x: i, y: mean(v) } : null; }) }], xl: xlabels(f30, s30).concat([{ x: s30, t: 'Today' }]) })}
+   <div class="tiles t3"><div class="tile"><b>${(() => { const v = d30.filter(foodLogged).map(d => S.days[d].sn); return v.length ? f1(mean(v)) : '–'; })()}</b><span>Snacks a day, 30 days</span></div><div class="tile"><b>${d30.filter(d => foodLogged(d) && S.days[d].sn === 0).length}</b><span>Snack-free days, 30 days</span></div><div class="tile"><b>${streakOf(d => foodLogged(d) && S.days[d].sn === 0).cur}</b><span>Snack-free in a row</span></div></div></div>
+  <div class="card"><h3>Plan, week by week</h3>${chart({ label: 'Plan adherence by week', span: 11, ymin: 0, ymax: 100, yfmt: v => Math.round(v) + '%', xl: [{ x: 0, t: shortD(wkn[0].a) }, { x: 5, t: shortD(wkn[5].a) }, { x: 11, t: 'This week' }], layers: S.plan.map((p, i) => ({ type: 'line', c: ['#D9A441', '#4C7A46', '#3E7CB1', '#8E6BBF', '#C2477A'][i % 5], w: 2.2, pts: wkn.map(w => { const v = wpc(d => !!(S.days[d] && S.days[d].m[p.id]), w.a); return v ? { x: w.x, y: v.y } : null; }) })).concat([{ type: 'line', c: 'var(--ink)', w: 3, pts: wkn.map(w => { const v = wpc(d => S.plan.length > 0 && planDone(d) === S.plan.length, w.a); return v ? { x: w.x, y: v.y } : null; }) }]) })}
+   ${legend(S.plan.map((p, i) => ({ c: ['#D9A441', '#4C7A46', '#3E7CB1', '#8E6BBF', '#C2477A'][i % 5], n: p.name + ' ' + p.sub })).concat([{ c: 'var(--ink)', n: 'Full plan day' }]))}</div>
+  <div class="card"><h3>Comfort</h3>${chart({ label: 'Comfort', span: s60, ymin: 0.5, ymax: 5.5, yfmt: v => f1(v), layers: [{ type: 'h', y: BREAK.avgLow, c: '#D9622B', t: 'break zone', free: true }, { type: 'dots', c: '#C58AA8', pts: d60.map((d, i) => cOf(d) != null ? { x: i, y: cOf(d) } : null) }, { type: 'line', c: '#C2477A', w: 3, pts: seriesVals('cmf7', d60).map((y, i) => y == null ? null : { x: i, y }) }], xl: xlabels(f60, s60).concat([{ x: s60, t: 'Today' }]) })}
+   <div class="mu sm">Dots are each day. The line is the 7-day average. Below the dashed line for a while is when I'll suggest a break.</div></div>
+  <div class="card"><h3>What goes with a good day</h3><div class="mu sm">Average comfort score on days that had each of these (needs a few days of data).</div>
+   <table class="tbl"><tr><th></th><th>Comfort</th><th>Days</th></tr>${groups.map(([n, f]) => { const v = scored.filter(f).map(cOf); return `<tr><td>${n}</td><td><b>${v.length >= 2 ? f1(mean(v)) : '–'}</b></td><td>${v.length}</td></tr>`; }).join('')}</table></div>
+  <div class="card"><h3>By weekday</h3><table class="tbl"><tr><th></th><th>Comfort</th><th>Snacks</th><th>kcal</th><th>Δ kg</th></tr>${wd.map(w => `<tr><td>${w.n}</td><td>${w.cm != null ? f1(w.cm) : '–'}</td><td>${w.sn != null ? f1(w.sn) : '–'}</td><td>${w.kc != null ? nf(w.kc) : '–'}</td><td>${w.dw != null ? sg(w.dw, 2) : '–'}</td></tr>`).join('')}</table><div class="mu sm mt">Δ kg is the average change on the previous weigh-in.</div></div>
+  <div class="card"><h3>Month by month</h3><div style="overflow-x:auto"><table class="tbl"><tr><th>Month</th><th>Weight</th><th>kcal</th><th>Comfort</th><th>Full days</th></tr>${mrows.map(r => `<tr><td>${monthY(r.m + '-15')}</td><td>${r.w != null ? f1(r.w) : '–'}</td><td>${r.kc != null ? nf(r.kc) : '–'}</td><td>${r.cm != null ? f1(r.cm) : '–'}</td><td>${r.full}</td></tr>`).join('')}</table></div></div>`;
+}
+
+/* ---------- SETTINGS + SETUP ---------- */
+const ACT_OPTS = a => ACTIVITY.map(o => `<option value="${o[0]}" ${+a === o[0] ? 'selected' : ''}>${o[1]}</option>`).join('');
+function vSettings() {
+  const p = S.p; let theme = 'auto'; try { theme = localStorage.getItem('lean_theme') || 'auto'; } catch (e) { }
+  const f = (id, l, v, ex) => `<label>${l}<input id="${id}" value="${esc(v == null ? '' : v)}" ${ex || 'type="number" step="0.1" inputmode="decimal"'}></label>`;
+  return coachStrip() + `<div class="card"><h2>Settings</h2>
+   <div class="row mt">${f('s-name', 'Name', p.name, 'maxlength="24"')}${f('s-age', 'Age', p.age, 'type="number" inputmode="numeric" style="max-width:90px"')}</div>
+   <div class="row mt"><div style="flex:1"><div class="mu sm">Sex (for the energy and body-fat formulas)</div><div class="row" style="gap:6px;margin-top:4px"><button class="chip sx ${p.sex === 'm' ? 'on' : ''}" data-s="m" onclick="pickSex('m')">Male</button><button class="chip sx ${p.sex === 'f' ? 'on' : ''}" data-s="f" onclick="pickSex('f')">Female</button></div></div></div>
+   <div class="row mt">${f('s-h', 'Height (cm)', p.heightCm, 'type="number" inputmode="numeric"')}${f('s-goal', 'Goal weight (kg)', p.goalKg || '')}</div>
+   <label class="mt" style="display:block">Activity<select id="s-act">${ACT_OPTS(p.activity)}</select></label>
+   <div class="row mt">${f('s-floor', 'Calorie floor', p.floor || '', 'type="number" inputmode="numeric" placeholder="auto: ' + nf(FLOOR[p.sex]) + '"')}${f('s-target', 'Calorie target', p.target || '', 'type="number" inputmode="numeric" placeholder="auto"')}</div>
+   <div class="row mt">${f('s-lean', 'Lean share of weight lost (%)', Math.round(p.leanFrac * 100), 'type="number" inputmode="numeric"')}${f('s-steps', 'Steps a day', p.steps, 'type="number" inputmode="numeric"')}</div>
+   <div class="row mt">${f('s-bf', 'Measured body fat % (optional)', p.bf ? p.bf.pct : '', 'type="number" step="0.1" inputmode="decimal"')}${f('s-snk', 'kcal per snack', S.snackKcal, 'type="number" inputmode="numeric"')}</div>
+   <div class="mu sm mt">The calorie floor is the lowest daily intake you want to see before I flag it. 1,500 (men) and 1,200 (women) are commonly used lower limits for dieting without supervision. A measured body-fat reading, if you have one from scales or a scan, replaces my estimate.</div>
+   ${SERR ? `<div class="bad mt" role="alert">${esc(SERR)}</div>` : ''}<div class="row mt"><button class="btn" onclick="saveProfile()">Save</button></div></div>
+  <div class="card"><h3>Your plan</h3><div class="mu sm">The things you tick each day. Change them, add more, or remove any. The kcal is what one tick counts for.</div>
+   ${S.plan.map((x, i) => `<div class="card" style="box-shadow:none;margin-top:10px"><div class="row"><label style="flex:0 0 64px">Icon<input value="${esc(x.icon)}" maxlength="4" oninput="planSet(${i},'icon',this.value)" style="text-align:center"></label><label style="flex:2 1 110px">Name<input value="${esc(x.name)}" maxlength="20" oninput="planSet(${i},'name',this.value)"></label></div>
+    <div class="row mt"><label>When<input value="${esc(x.sub)}" maxlength="14" oninput="planSet(${i},'sub',this.value)" placeholder="lunch"></label><label style="flex:0 0 100px">kcal<input type="number" inputmode="numeric" value="${x.kcal}" oninput="planSet(${i},'kcal',this.value)"></label><button class="chip" onclick="planDel(${i})" aria-label="Remove ${esc(x.name)}">✕</button></div></div>`).join('')}
+   ${S.plan.length < 8 ? '<div class="row mt"><button class="btn g" onclick="planAdd()">+ Add something to the plan</button></div>' : ''}</div>
+  ${dataCard(true)}
+  <div class="card"><h3>Appearance</h3><div class="row mt">${['auto', 'light', 'dark'].map(t => chip(`setTheme('${t}')`, t[0].toUpperCase() + t.slice(1), theme === t, '')).join('')}</div></div>
+  <div class="card"><h3>About these numbers</h3><div class="mu sm">Lean Matrix is a tracker, not medical advice. Body fat uses the Deurenberg BMI formula (about ±4 points). Weight projections extend your recent trend and are never taken below BMI ${BMI_UNDER}. The joint figures come from published studies of groups of people, not individuals: relative knee osteoarthritis risk from a BMJ Open meta-analysis of prospective studies (overweight 2.45×, obese 4.55×, +35% per 5 BMI points), and about 4 kg less force through the knee per kg lost from Messier et al. 2005 (Arthritis &amp; Rheumatism). Eating very little for long periods can cost muscle, bone and energy. If you feel unwell, or food is getting stressful, please talk to a doctor. The plan on its own can be very low in calories and protein, so keep an eye on the comfort score.</div></div>
+  <details class="card" ${DT ? 'open' : ''} ontoggle="DT=this.open"><summary>Developer tools</summary><div class="mu mt">For testing. Ordinary use never needs these.</div>
+   <div class="mt"><div class="mu">Sample data replaces everything.</div><div class="row mt"><button class="btn g" onclick="loadDemo('good')">${RST === 'good' ? 'Tap again to replace my data' : 'Demo: going well'}</button><button class="btn g" onclick="loadDemo('tired')">${RST === 'tired' ? 'Tap again to replace my data' : 'Demo: needs a break'}</button></div></div>
+   <div class="mt"><div class="row"><button class="btn g" onclick="resetAll()">${RST === 'reset' ? 'Tap again to delete everything' : 'Reset all'}</button></div></div></details>`;
+}
+function vSetup() {
+  const f = (id, l, v, ex) => `<label>${l}<input id="${id}" value="${esc(v)}" ${ex || 'type="number" step="0.1" inputmode="decimal"'}></label>`;
+  return `<div class="card"><h2>Lean Matrix</h2><div class="note">A few taps a day: porridge, salad, salad, snacks, weight and how the day felt. Then every streak, graph and projection you can think of. Anything off-plan can still be counted in calories.</div>
+   <div class="row mt">${f('su-name', 'Name', '', 'maxlength="24"')}${f('su-age', 'Age', '', 'type="number" inputmode="numeric" style="max-width:90px"')}</div>
+   <div class="row mt"><div><div class="mu sm">Sex (for the energy and body-fat formulas)</div><div class="row" style="gap:6px;margin-top:4px"><button class="chip sx ${SU.sex === 'm' ? 'on' : ''}" data-s="m" onclick="pickSex('m')">Male</button><button class="chip sx ${SU.sex === 'f' ? 'on' : ''}" data-s="f" onclick="pickSex('f')">Female</button></div></div></div>
+   <div class="row mt">${f('su-h', 'Height (cm)', '', 'type="number" inputmode="numeric"')}${f('su-w', 'Weight today (kg)', '')}</div>
+   <div class="row mt">${f('su-goal', 'Goal weight (kg)', '')}<label>Activity<select id="su-act">${ACT_OPTS(1.375)}</select></label></div>
+   <div class="mu sm mt">What each plan tick is worth (estimates are fine, you can change them later)</div>
+   <div class="row mt">${DEFAULT_PLAN.map((p, i) => `<label style="min-width:86px">${p.icon} ${p.name} (${p.sub}) kcal<input id="su-k${i}" type="number" inputmode="numeric" value="${p.kcal}"></label>`).join('')}</div>
+   ${SERR ? `<div class="bad mt" role="alert">${esc(SERR)}</div>` : ''}<div class="row mt"><button class="btn" onclick="doSetup()">Start</button></div>
+   <div class="mu sm mt">For adults (18+). Everything here is an estimate, not medical advice.</div></div>${dataCard(true)}`;
+}
+let SU = { sex: 'm' };
+
+/* ---------- ACTIONS ---------- */
+const say = m => { MSG = m; };
+function go(v) { V = v; SERR = ''; IMPQ = null; IMPERR = ''; CSVT = ''; DNOTE = ''; RST = 0; render(); scrollTo(0, 0); }
+const goDay = n => { const d = sh(TD, n); if (d <= ds(0)) { TD = d; render(); } };
+const wtog = k => { WT = WT.includes(k) ? WT.filter(x => x !== k) : WT.concat([k]); render(); };
+const ctog = k => { CSER = CSER.includes(k) ? CSER.filter(x => x !== k) : CSER.concat([k]); render(); };
+/* sex buttons update in place so anything already typed in the form isn't wiped */
+function pickSex(s) {
+  if (S) { S.p.sex = s; save(); const f = $('#s-floor'); if (f) f.placeholder = 'auto: ' + nf(FLOOR[s]); } else SU.sex = s;
+  document.querySelectorAll('.sx').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+}
+function togglePlan(id) {
+  const x = dayOf(TD); if (x.m[id]) delete x.m[id]; else x.m[id] = 1; save();
+  const n = S.plan.length, done = planDone(TD); say(done === n && n ? pick(['Full plan day. Tidy.', 'All three. Suspiciously disciplined.', 'Plan complete. Go and enjoy being bored.']) : x.m[id] ? pick(['Ticked.', 'Logged. Simple.', 'Done.']) : 'Unticked.'); render();
+}
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function snack(n) { const x = dayOf(TD); x.sn = Math.max(0, x.sn + n); save(); say(n > 0 ? pick(['Noted. No drama.', 'Counted. Carry on.']) : 'One fewer.'); render(); }
+function addEx() {
+  const n = ($('#en').value || '').trim() || 'Food', k = Math.round(parseFloat($('#ek').value)); if (!(k > 0)) { SERR = 'Add the calories for that.'; return render(); }
+  dayOf(TD).ex.push({ n: n.replace(/[;|]/g, ' ').trim().slice(0, 30) || 'Food', k }); SERR = ''; save(); say(`${nf(k)} kcal counted.`); render();
+}
+function delEx(i) { dayOf(TD).ex.splice(i, 1); save(); render(); }
+function saveKo() { const v = Math.round(parseFloat($('#ko').value)); dayOf(TD).ko = v > 0 ? v : null; save(); render(); }
+function saveWeight() {
+  const v = Math.round(parseFloat($('#tw').value) * 100) / 100; if (!(v > 20 && v < 400)) { SERR = 'Add a weight in kg, for example 86.4.'; return render(); }
+  dayOf(TD).w = v; SERR = ''; save(); const st = wStats()[TD];
+  say(st && st.dPrev != null ? (st.dPrev < -0.05 ? `Down ${f2(-st.dPrev)} on last time.` : st.dPrev > 0.05 ? `Up ${f2(st.dPrev)}. Daily weight bounces about. Watch the trend.` : 'Dead level. The trend is what counts.') : 'Weighed in. Number one of many.'); render();
+}
+function clearWeight() { dayOf(TD).w = null; save(); render(); }
+function setComfort(c) { const x = dayOf(TD); x.c = x.c === c ? null : c; save(); say(x.c == null ? '' : x.c <= 2 ? 'Noted. Rough days happen. A couple in a row and I will suggest a break.' : x.c >= 4 ? 'Good. That is the sign it is sustainable.' : 'Okay. Noted.'); render(); }
+function snoozeBreak() { S.breakSnooze = sh(ds(0), BREAK.snoozeDays); save(); render(); }
+function planSet(i, f, v) { S.plan[i][f] = f === 'kcal' ? Math.max(0, Math.round(+v || 0)) : v; save(); }
+function planAdd() { S.plan.push({ id: uid(), name: 'Food', sub: '', icon: '🍽️', kcal: 300 }); save(); render(); }
+function planDel(i) { const id = S.plan[i].id; S.plan.splice(i, 1); Object.keys(S.days).forEach(d => { delete S.days[d].m[id]; }); save(); render(); }
+function saveProfile() {
+  const g = i => $('#' + i).value, n = i => parseFloat(g(i)), age = Math.round(n('s-age')), h = Math.round(n('s-h'));
+  if (!(age >= 18 && age <= 110)) { SERR = 'This app is for adults, so age needs to be 18 or over.'; return render(); } if (!(h >= 100 && h <= 230)) { SERR = 'Add your height in cm.'; return render(); }
+  const p = S.p; p.name = g('s-name').trim().slice(0, 24); p.age = age; p.heightCm = h; p.goalKg = n('s-goal') > 0 ? n('s-goal') : 0; p.activity = +g('s-act'); p.floor = n('s-floor') > 0 ? Math.round(n('s-floor')) : null; p.target = n('s-target') > 0 ? Math.round(n('s-target')) : null;
+  p.leanFrac = clamp((n('s-lean') || 25) / 100, 0.05, 0.5); p.steps = clamp(Math.round(n('s-steps')) || 0, 0, 40000); S.snackKcal = clamp(Math.round(n('s-snk')) || 0, 0, 2000);
+  const bf = n('s-bf'); p.bf = bf > 0 && latestKg() ? { pct: bf, kg: trendNow() || latestKg() } : bf > 0 ? { pct: bf, kg: 0 } : null;
+  if (p.goalKg > 0 && bmiOf(p.goalKg) < BMI_UNDER) { const was = p.goalKg; p.goalKg = Math.ceil(wAtBmi(BMI_UNDER) * 10) / 10; SERR = `A goal of ${f1(was)} kg would be a BMI of ${f1(bmiOf(was))}, under ${BMI_UNDER}. I've set it to ${f1(p.goalKg)} kg, the lowest weight in the healthy range for your height.`; } else SERR = '';
+  save(); say('Saved.'); render();
+}
+function doSetup() {
+  const g = i => $('#' + i).value, n = i => parseFloat(g(i)), age = Math.round(n('su-age')), h = Math.round(n('su-h'));
+  if (!(age >= 18 && age <= 110)) { SERR = age > 0 && age < 18 ? 'Lean Matrix is for adults. If you are under 18, any weight change should be planned with a doctor.' : 'Add your age (18 or over).'; return render(); }
+  if (!(h >= 100 && h <= 230)) { SERR = 'Add your height in cm.'; return render(); }
+  S = newState({ name: g('su-name').trim().slice(0, 24), age, sex: SU.sex, heightCm: h, goalKg: n('su-goal') > 0 ? n('su-goal') : 0, activity: +g('su-act') });
+  S.plan.forEach((p, i) => { const k = Math.round(n('su-k' + i)); if (k >= 0) p.kcal = k; });
+  const w = n('su-w'); if (w > 20 && w < 400) dayOf(ds(0)).w = Math.round(w * 100) / 100;
+  if (S.p.goalKg > 0 && bmiOf(S.p.goalKg) < BMI_UNDER) { S.p.goalKg = Math.ceil(wAtBmi(BMI_UNDER) * 10) / 10; say(`That goal was under BMI ${BMI_UNDER}, so I set it to ${f1(S.p.goalKg)} kg. You can change it in Settings.`); } else say('Set up. Tick things off as you go.');
+  SERR = ''; TD = ds(0); V = 'today'; save(); render();
+}
+function setTheme(t) { try { localStorage.setItem('lean_theme', t); } catch (e) { } applyTheme(); render(); }
+function applyTheme() { let t = 'auto'; try { t = localStorage.getItem('lean_theme') || 'auto'; } catch (e) { } if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t); }
+function resetAll() { if (RST !== 'reset') { RST = 'reset'; return render(); } RST = 0; S = null; try { localStorage.removeItem(KEY); } catch (e) { } V = 'setup'; render(); }
+
+/* demo data: 10 weeks that look like a real run. 'tired' ends with a rough patch so the break check has something to say. */
+function loadDemo(kind) {
+  if (RST !== kind) { RST = kind; return render(); } RST = 0;
+  let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647, N = 70;
+  S = newState({ name: S ? S.p.name : 'Demo', age: 34, sex: 'm', heightCm: 178, goalKg: 78, activity: 1.375 }); S.created = ds(-N);
+  for (let i = N; i >= 0; i--) {
+    const d = ds(-i), x = dayOf(d), prog = (N - i) / N, ok = rnd() < 0.86 && !(i % 11 === 0);
+    S.plan.forEach((p, j) => { if (ok || rnd() < 0.5) x.m[p.id] = 1; if (i % 11 === 0 && j === 2) delete x.m[p.id]; });
+    x.sn = rnd() < 0.55 ? 0 : rnd() < 0.7 ? 1 : 2; if (!ok && rnd() < 0.6) x.ex.push({ n: 'Pizza slice', k: 300 + Math.round(rnd() * 250) });
+    if (rnd() < 0.96) x.w = Math.round((92 - 7.2 * prog + (rnd() - 0.5) * 1.3) * 10) / 10;
+    let c = 3 + Math.round(rnd() * 1.6 - 0.3); if (kind === 'tired' && i <= 6) c = i % 2 ? 2 : 1 + Math.round(rnd()); if (kind === 'tired' && i <= 3) x.sn = 0;
+    if (rnd() < 0.93) x.c = clamp(c, 1, 5);
+  }
+  say(kind === 'tired' ? 'Demo data: a rough few days at the end.' : 'Demo data: ten weeks going well.'); save(); V = 'today'; TD = ds(0); render();
+}
+
+/* ---------- EXPORT / IMPORT: a spreadsheet you can open anywhere and read back in here ---------- */
+const csvCell = v => { v = v == null ? '' : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+function buildCSV() {
+  const R = [], sec = (name, head, data) => { R.push(['## ' + name]); R.push(head); data.forEach(r => R.push(r)); R.push([]); }, p = S.p, l = latest(), t = trendNow();
+  sec('about', ['key', 'value'], [['format', 'lean-matrix-export-v1'], ['exported', ds(0)], ['how to restore', 'Lean Matrix > Settings > Your data > Import a spreadsheet']]);
+  sec('summary (read-only)', ['key', 'value'], [['latest weight kg', l ? l.w : ''], ['trend weight kg', t != null ? f2(t) : ''], ['BMI', t != null ? f1(bmiOf(t)) : ''], ['est body fat %', t != null ? f1(bfAt(t).pct) : ''], ['full plan streak', streakOf(d => planDone(d) === S.plan.length && S.plan.length > 0).cur], ['weigh-in streak', streakOf(d => wOf(d) != null).cur], ['days logged', Object.keys(S.days).filter(hasAny).length]]);
+  sec('profile', ['key', 'value'], [['name', p.name], ['age', p.age], ['sex', p.sex], ['heightCm', p.heightCm], ['goalKg', p.goalKg], ['activity', p.activity], ['leanFrac', p.leanFrac], ['steps', p.steps], ['floor', p.floor || ''], ['target', p.target || ''], ['bfPct', p.bf ? p.bf.pct : ''], ['bfKg', p.bf ? p.bf.kg : ''], ['snackKcal', S.snackKcal], ['created', S.created], ['lastExport', S.lastExport || '']]);
+  sec('plan', ['id', 'name', 'when', 'icon', 'kcal'], S.plan.map(x => [x.id, x.name, x.sub, x.icon, x.kcal]));
+  sec('days', ['date', 'weight_kg', 'comfort', 'snacks', 'kcal_total_override', 'plan_done', 'other_food'], Object.keys(S.days).filter(hasAny).sort().map(d => { const x = S.days[d]; return [d, x.w == null ? '' : x.w, x.c == null ? '' : x.c, x.sn, x.ko == null ? '' : x.ko, Object.keys(x.m).join(';'), x.ex.map(e => e.n.replace(/[;|]/g, ' ') + '|' + e.k).join(';')]; }));
+  return '\ufeff' + R.map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+}
+function parseCSV(t) {
+  t = t.replace(/^(\ufeff|ï»¿)+/, ''); const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < t.length; i++) { const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; } else if (c === '"') q = true; else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(f); f = ''; rows.push(row); row = []; } else f += c; }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); } return rows;
+}
+function sections(text) {
+  const secs = {}; let cur = null, head = false;
+  parseCSV(text).forEach(r => { if (r[0] && r[0].startsWith('## ') && r.slice(1).every(x => x === '')) { cur = r[0].slice(3).trim(); secs[cur] = { head: null, rows: [] }; head = true; return; } if (!cur || r.every(x => x === '')) return; if (head) { secs[cur].head = r; head = false; return; } secs[cur].rows.push(r); });
+  return secs;
+}
+const nd = x => { x = String(x == null ? '' : x).trim(); let m = x.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`; m = x.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})$/); if (m) return `${m[3].length === 2 ? '20' + m[3] : m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; return x; };
+function csvToState(text) {
+  const secs = sections(text); if (!secs.profile || !secs.days) throw new Error('missing');
+  const kv = {}; secs.profile.rows.forEach(r => { kv[r[0]] = r[1]; }); const num = x => (x === '' || x == null || isNaN(+x)) ? 0 : +x;
+  const raw = { p: { name: kv.name, age: num(kv.age), sex: kv.sex, heightCm: num(kv.heightCm), goalKg: num(kv.goalKg), activity: num(kv.activity), leanFrac: num(kv.leanFrac), steps: num(kv.steps), floor: num(kv.floor), target: num(kv.target), bf: num(kv.bfPct) > 0 ? { pct: num(kv.bfPct), kg: num(kv.bfKg) } : null },
+    snackKcal: num(kv.snackKcal), created: nd(kv.created), lastExport: kv.lastExport ? nd(kv.lastExport) : null, plan: (secs.plan ? secs.plan.rows : []).map(r => ({ id: r[0], name: r[1], sub: r[2], icon: r[3], kcal: num(r[4]) })), days: {} };
+  secs.days.rows.forEach(r => { const m = {}; String(r[5] || '').split(';').filter(Boolean).forEach(id => { m[id] = 1; });
+    raw.days[nd(r[0])] = { w: r[1] === '' ? null : num(r[1]), c: r[2] === '' ? null : num(r[2]), sn: num(r[3]), ko: r[4] === '' ? null : num(r[4]), m, ex: String(r[6] || '').split(';').filter(Boolean).map(s => { const q = s.split('|'); return { n: q[0], k: num(q[1]) }; }) }; });
+  const mg = migrate(raw); if (!mg) throw new Error('bad'); return mg;
+}
+/* an export from Ascend: weights and daily calorie totals come across; Ascend's food and training data stays behind */
+function ascendImport(text) {
+  const secs = sections(text); if (!secs.weights && !secs.days) throw new Error('missing'); let w = 0, k = 0;
+  (secs.weights ? secs.weights.rows : []).forEach(r => { const d = nd(r[0]), v = parseFloat(r[1]); if (v > 20 && v < 400 && /^\d{4}-\d{2}-\d{2}$/.test(d) && dayOf(d).w == null) { dayOf(d).w = Math.round(v * 100) / 100; w++; } });
+  (secs.days ? secs.days.rows : []).forEach(r => { const d = nd(r[0]), v = parseFloat(r[1]); if (v > 0 && /^\d{4}-\d{2}-\d{2}$/.test(d) && !foodLogged(d)) { dayOf(d).ko = Math.round(v); k++; } });
+  return { w, k };
+}
+function exportCSV() {
+  S.lastExport = ds(0); save(); CSVT = buildCSV();
+  try { const u = URL.createObjectURL(new Blob([CSVT], { type: 'text/csv;charset=utf-8' })), a = document.createElement('a'); a.href = u; a.download = 'lean-matrix-' + ds(0) + '.csv'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 3000); DNOTE = 'Spreadsheet exported. Keep the file somewhere safe.'; }
+  catch (e) { DNOTE = 'Your browser blocked the download. Copy the text below into a file called lean-matrix.csv.'; } render();
+}
+function importFile(inp, kind) {
+  const f = inp.files && inp.files[0]; if (!f) return; IMPQ = null; IMPERR = ''; const fr = new FileReader();
+  fr.onload = () => { const text = String(fr.result);
+    try { if (kind === 'ascend') { if (!S) { IMPERR = 'Set up first, then import your Ascend file.'; return render(); } const r = ascendImport(text); save(); say(`Brought across ${plural(r.w, 'weigh-in')} and ${plural(r.k, 'day')} of calories.`); DNOTE = `Imported ${plural(r.w, 'weigh-in')} and ${plural(r.k, 'calorie day')} from Ascend. Existing entries were left alone.`; }
+      else IMPQ = csvToState(text); } catch (e) { IMPERR = kind === 'ascend' ? "That doesn't look like an Ascend export." : "That file isn't a Lean Matrix export."; } render(); };
+  fr.onerror = () => { IMPERR = "Couldn't read that file."; render(); }; fr.readAsText(f);
+}
+function applyImport() { if (!IMPQ) return; S = IMPQ; IMPQ = null; IMPERR = ''; say('Restored. Right where we left off.'); save(); V = 'today'; TD = ds(0); render(); scrollTo(0, 0); }
+function dataCard(withImport) {
+  const q = IMPQ ? `<div class="note"><b>Found ${Object.keys(IMPQ.days).length} days for ${esc(IMPQ.p.name || 'you')}.</b><div class="row mt"><button class="btn" onclick="applyImport()">${S ? 'Replace my current data' : 'Restore this data'}</button><button class="btn g" onclick="IMPQ=null;render()">Cancel</button></div></div>` : '';
+  const last = S && S.lastExport, since = last ? dd(last, ds(0)) : null;
+  return `<div class="card"><h3>Your data</h3><div class="mu">Your data lives in this browser. Back it up as a spreadsheet now and then, and read it back in here any time.</div>
+   ${S ? (since == null ? '<div class="warnbox">You haven\'t backed up yet.</div>' : since > 30 ? `<div class="warnbox">Last backup was ${since} days ago (${prettyY(last)}).</div>` : `<div class="note">Last backup: ${prettyY(last)}.</div>`) + '<div class="row mt"><button class="btn" onclick="exportCSV()">Export spreadsheet (CSV)</button></div>' : ''}
+   ${DNOTE ? `<div class="note" role="status">${esc(DNOTE)}</div>` : ''}${CSVT ? `<textarea class="csvbox" readonly aria-label="Exported spreadsheet text" onfocus="this.select()">${esc(CSVT)}</textarea>` : ''}
+   ${withImport ? `<div class="mt"><label>Import a Lean Matrix spreadsheet<input type="file" accept=".csv,text/csv" onchange="importFile(this,'own')"></label></div>${S ? `<div class="mt"><label>Bring weights and calories across from Ascend<input type="file" accept=".csv,text/csv" onchange="importFile(this,'ascend')"></label></div>` : ''}${IMPERR ? `<div class="bad mt" role="alert">${esc(IMPERR)}</div>` : ''}${q}` : ''}</div>`;
+}
+
+/* ---------- shell ---------- */
+function render() {
+  if (!S) V = 'setup';
+  const T = [['today', '📅', 'Today'], ['streaks', '🔥', 'Streaks'], ['weight', '⚖️', 'Weight'], ['body', '🧬', 'Body'], ['charts', '📊', 'Charts'], ['settings', '⚙️', 'Settings']];
+  $('#nav').innerHTML = S ? T.map(t => `<button class="${V === t[0] ? 'on' : ''}" ${V === t[0] ? 'aria-current="page"' : ''} onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('') : '';
+  $('#app').innerHTML = { today: vToday, streaks: vStreaks, weight: vWeight, body: vBody, charts: vCharts, settings: vSettings, setup: vSetup }[V]();
+}
+
+/* ---------------------------------------------------------------------
+   14. BOOT
+   --------------------------------------------------------------------- */
+try { applyTheme(); } catch (e) { }
+S = load(); if (!S) V = 'setup';
+render();
+
+</script></body></html>
